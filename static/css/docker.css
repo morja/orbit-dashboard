@@ -1,0 +1,52 @@
+/* Docker & DDEV view: Colima storage, running projects and Docker's breakdown. */
+
+.docker-free {
+  font-size: 2rem;
+  font-weight: 550;
+  margin: 20px 0;
+  color: var(--ink);
+}
+
+.docker-free small {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.docker-panel {
+  margin-bottom: 23px;
+}
+
+.docker-path {
+  overflow-wrap: anywhere;
+  min-width: 220px;
+}
+
+.docker-free {
+  font-size: 1.75rem;
+  margin: 12px 0;
+}
+
+.docker-panel {
+  margin-bottom: var(--page-gap);
+}
+
+.docker-panel td, .docker-panel th {
+  padding: 10px 12px;
+}
+
+.integration-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 0 0 14px; }
+.integration-toolbar .search-box { flex: 1 1 220px; min-width: 160px; }
+.integration-toolbar input { width: 100%; }
+.integration-toolbar > label:not(.search-box) { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 0.8rem; }
+.container-kind { display: block; margin-top: 4px; color: var(--faint); }
+#container-list td { overflow-wrap: anywhere; }
+
+.integration-toolbar select { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; }
+
+/* At large text/zoom, labels can stack above their selects without widening the page. */
+.integration-toolbar > label:not(.search-box) { flex-wrap: wrap; max-width: 100%; }
+.integration-toolbar select { min-width: 0; max-width: 100%; }
+.integration-toolbar .search-box { min-width: 0; max-width: 100%; }

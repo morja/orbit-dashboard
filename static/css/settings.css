@@ -1,0 +1,258 @@
+/* Settings dialog: section tabs, folder and server rows, and fixed actions while panels scroll. */
+
+#settings-dialog {
+  /* Keep the controls reachable while previewing a large dashboard zoom. */
+  zoom: calc(1 / var(--ui-zoom, 1));
+  width: min(780px, calc(100vw - 32px));
+  max-height: 90vh;
+  background: var(--paper);
+  padding: 0;
+  overflow: hidden;
+}
+
+#settings-form {
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  height: min(720px, 90vh);
+  box-sizing: border-box;
+}
+
+.settings-intro {
+  color: var(--muted);
+  font-size: 0.75rem;
+  margin: 8px 0 18px;
+}
+
+/* Tabs stay visible while only the selected panel scrolls. */
+.settings-tabs {
+  display: flex;
+  gap: 6px;
+  flex: none;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--line);
+  padding: 0 0 10px;
+}
+
+.settings-tab {
+  border: 1px solid transparent;
+  border-radius: 9px;
+  padding: 9px 12px;
+  color: var(--muted);
+  background: transparent;
+  font: inherit;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.settings-tab:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+.settings-tab[aria-selected="true"] {
+  background: var(--active);
+  border-color: var(--active-line);
+  color: var(--active-ink);
+}
+
+.settings-tab:focus-visible,
+.settings-panel:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.settings-panels {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding-right: 5px;
+}
+
+.settings-section {
+  padding: 20px 0;
+}
+
+.settings-section + .settings-section {
+  border-top: 1px solid var(--line);
+}
+
+.settings-section h3 {
+  font-size: 0.9375rem;
+  color: var(--ink);
+  margin: 0 0 8px;
+}
+
+.settings-section p {
+  font-size: 0.6875rem;
+  color: var(--muted);
+}
+
+.settings-heading,
+.source-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.settings-heading {
+  flex-wrap: wrap;
+}
+
+/* Project folder and server rows */
+
+.settings-source {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 17px;
+  margin: 14px 0;
+  background: var(--soft);
+}
+
+.settings-source label {
+  margin-top: 10px;
+}
+
+.source-heading label {
+  flex: 1;
+  margin-top: 0;
+}
+
+.source-heading .icon-button {
+  align-self: flex-end;
+  margin-bottom: 8px;
+}
+
+.settings-source summary {
+  cursor: pointer;
+  padding: 4px 0;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+}
+
+.source-title {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.source-meta {
+  display: block;
+  color: var(--muted);
+  font-size: 0.6875rem;
+  margin: 5px 0 0 17px;
+}
+
+details.settings-source:not([open]) {
+  padding: 10px 14px;
+  margin: 8px 0;
+}
+
+details.settings-source[open] summary {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+}
+
+/* Fields */
+
+#settings-dialog input:not([type="checkbox"]) {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  padding: 10px;
+  color: var(--ink);
+  background: var(--paper);
+  font-size: 0.75rem;
+}
+
+#settings-dialog .settings-toggle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 400;
+  line-height: 1.6;
+  margin-top: 13px;
+}
+
+.settings-toggle input {
+  accent-color: var(--green);
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+
+#settings-intervals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+#settings-intervals label {
+  margin: 6px 0;
+}
+
+/* Errors and actions stay below the scrolling panel. */
+#settings-error {
+  flex: none;
+  max-height: 80px;
+  overflow-y: auto;
+}
+
+#settings-dialog .notice {
+  margin: 10px 0;
+}
+
+#settings-dialog .dialog-actions {
+  flex: none;
+  background: var(--paper);
+  border-top: 1px solid var(--line);
+  padding: 18px 0 0;
+  margin-top: 5px;
+}
+
+@media (max-width: 650px) {
+  #settings-form {
+    padding: 20px;
+  }
+
+  .settings-tab {
+    padding: 9px 10px;
+  }
+
+  #settings-intervals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #settings-dialog .form-row,
+  .settings-source .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.readability-fields {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 16px;
+}
+
+.readability-fields label {
+  margin-top: 12px;
+  min-width: 0;
+}
+
+.readability-fields .muted {
+  display: block;
+  font-weight: 400;
+  margin-top: 7px;
+}
+
+@media(max-width:650px) {
+  .readability-fields {
+    grid-template-columns: 1fr;
+  }
+
+}

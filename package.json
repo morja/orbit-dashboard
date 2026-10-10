@@ -1,0 +1,14 @@
+{
+  "name": "orbit-dashboard",
+  "private": true,
+  "type": "module",
+  "description": "Browser checks for Orbit. Orbit itself runs without Node.js.",
+  "license": "MIT",
+  "scripts": {
+    "check": "node scripts/check-js.mjs",
+    "test:browser": "node tests/browser.cjs && node tests/settings-browser.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.64.0"
+  }
+}

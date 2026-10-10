@@ -1,0 +1,13 @@
+data/
+__pycache__/
+.DS_Store
+
+# Local configuration must not enter a public release.
+config.json
+AGENTS.local.md
+node_modules/
+
+# Local editor and build artifacts.
+.idea/
+.vscode/
+*.app/

@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f4f5f0" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#121815" media="(prefers-color-scheme: dark)">
+  <title>Orbit · Your overview</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/orbit.css">
+  <script type="module" src="/js/main.js"></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <a href="#overview" class="brand"><span class="brand-mark">o<span></span></span>orbit<span class="brand-caption">YOUR WORKSPACE</span></a>
+    <button id="sidebar-toggle" class="icon-button" aria-label="Collapse sidebar" aria-expanded="true" title="Collapse sidebar">‹</button>
+    <div class="nav-label">OVERVIEW</div>
+    <nav aria-label="Main navigation">
+      <a href="#overview" data-view="overview" aria-label="Overview"><span data-icon="grid"></span>Overview</a>
+      <a href="#projects" data-view="projects" aria-label="Projects"><span data-icon="folder"></span>Projects<span id="nav-count" class="nav-count">…</span></a>
+      <a href="#servers" data-view="moon" aria-label="Servers"><span data-icon="server"></span><span id="server-nav-label">Servers</span></a>
+      <a href="#docker" data-view="docker" aria-label="Docker & DDEV"><span data-icon="server"></span>Docker &amp; DDEV</a>
+      <a href="#storage" data-view="storage" aria-label="Storage"><span data-icon="disk"></span>Storage</a>
+    </nav>
+    <div class="sidebar-note"><div class="mini-orbit"></div><p>Everything in one place.</p><span>Your Mac. Your projects.<br>Your next step.</span></div>
+    <div class="sidebar-bottom">
+      <span class="local-dot"></span>Local on your Mac
+      <button id="settings" class="icon-button" title="Settings" aria-label="Settings"><span data-icon="settings"></span></button>
+    </div>
+  </aside>
+
+  <main>
+    <header class="topbar">
+      <div id="overview-heading" hidden></div>
+      <div class="breadcrumb">Workspace <span>/</span> <b id="breadcrumb">Overview</b></div>
+      <div class="topbar-right">
+        <span id="clock"></span>
+        <button id="settings-topbar" class="icon-button" title="Settings" aria-label="Settings"><span data-icon="settings"></span></button>
+        <button id="refresh" class="button secondary"><span data-icon="refresh"></span><span>Refresh</span></button>
+      </div>
+      <div class="refresh-progress" id="refresh-progress" hidden><i></i></div>
+    </header>
+
+    <div class="page-heading">
+      <div id="heading-copy">
+        <div class="eyebrow" id="eyebrow">YOUR PERSONAL OVERVIEW</div>
+        <h1 id="title">Overview</h1>
+        <p id="subtitle"></p>
+      </div>
+      <div class="live-label" id="live-label"><span class="local-dot"></span><span>Connecting …</span></div>
+    </div>
+
+    <div id="connection-error" class="connection-error" hidden>The dashboard connection was lost. The last values remain visible.</div>
+
+    <div id="content" aria-live="polite" aria-busy="true">
+      <div class="loading-state">
+        <span class="spinner"></span>
+        <h2>Reading your workspace.</h2>
+        <p>The first results will appear shortly. Large folders take a little longer.</p>
+      </div>
+    </div>
+
+    <footer>Orbit <span>·</span> A clear view of your workspace.<span class="footer-right" id="footer-status"></span></footer>
+  </main>
+
+  <dialog id="project-dialog">
+    <form id="project-form">
+      <div class="dialog-heading">
+        <div><div class="eyebrow">PROJECT NOTE</div><h2 id="dialog-title"></h2></div>
+        <button type="button" class="icon-button close-dialog" aria-label="Close"><span data-icon="close"></span></button>
+      </div>
+      <p id="dialog-path" class="path"></p>
+      <label for="next-step">What is your next step?</label>
+      <textarea id="next-step" maxlength="2000" rows="5" placeholder="For example: test and publish the selection page …"></textarea>
+      <div class="form-row">
+        <div>
+          <label for="project-state">Project status</label>
+          <select id="project-state">
+            <option value="active">Active</option>
+            <option value="paused">Paused</option>
+            <option value="blocked">Blocked</option>
+            <option value="done">Done</option>
+            <option value="archived">Archived</option>
+          </select>
+        </div>
+        <div>
+          <label for="project-priority">Priority</label>
+          <select id="project-priority">
+            <option value="normal">Normal</option>
+            <option value="high">High</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+      </div>
+      <p class="muted">Your note stays local. It does not change project files.</p>
+      <div class="dialog-actions">
+        <button type="button" class="button secondary close-dialog">Cancel</button>
+        <button class="button primary" id="save-note">Save<span data-icon="arrow"></span></button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="settings-dialog" aria-labelledby="settings-title">
+    <form id="settings-form">
+      <div class="dialog-heading">
+        <div><div class="eyebrow">YOUR WORKSPACE</div><h2 id="settings-title">Your Orbit. Your settings.</h2></div>
+        <button type="button" class="icon-button close-settings" aria-label="Close"><span data-icon="close"></span></button>
+      </div>
+      <p class="settings-intro">Set up Orbit for your computer. Everything stays local and can be changed here.</p>
+
+      <div class="settings-tabs" role="tablist" aria-label="Settings sections">
+        <button type="button" class="settings-tab" id="settings-tab-appearance" role="tab" data-settings-tab="appearance" aria-controls="settings-panel-appearance" aria-selected="false" tabindex="-1">Appearance</button>
+        <button type="button" class="settings-tab" id="settings-tab-tools" role="tab" data-settings-tab="tools" aria-controls="settings-panel-tools" aria-selected="false" tabindex="-1">Tools</button>
+        <button type="button" class="settings-tab" id="settings-tab-server" role="tab" data-settings-tab="server" aria-controls="settings-panel-server" aria-selected="false" tabindex="-1">Servers</button>
+        <button type="button" class="settings-tab" id="settings-tab-projects" role="tab" data-settings-tab="projects" aria-controls="settings-panel-projects" aria-selected="false" tabindex="-1">Project folders</button>
+        <button type="button" class="settings-tab" id="settings-tab-advanced" role="tab" data-settings-tab="advanced" aria-controls="settings-panel-advanced" aria-selected="false" tabindex="-1">Advanced</button>
+      </div>
+
+      <div class="settings-panels">
+        <div class="settings-panel" id="settings-panel-projects" role="tabpanel" aria-labelledby="settings-tab-projects" tabindex="0" hidden>
+          <section class="settings-section">
+            <div class="settings-heading">
+              <h3>Project folders</h3>
+              <button type="button" class="button secondary" id="detect-setup">Detect environment</button>
+            </div>
+            <p>Choose your project folders. Name categories and groups as you like. Leave a group empty to derive it from subfolders.</p>
+            <div id="settings-detection"></div>
+            <label>Find folders<input id="settings-source-search" type="search" placeholder="Path, category or group"></label>
+            <div id="settings-sources"></div>
+            <button type="button" class="button secondary" id="add-source">Add folder</button>
+            <label>Category order<textarea id="setting-category_order" rows="3" placeholder="One category per line"></textarea></label>
+            <p class="muted">Optional order for category tabs. Leave empty to follow project folder order.</p>
+          </section>
+        </div>
+
+        <div class="settings-panel" id="settings-panel-appearance" role="tabpanel" aria-labelledby="settings-tab-appearance" tabindex="0" hidden>
+          <section class="settings-section">
+            <h3>Appearance</h3>
+            <label for="setting-language">Language<select id="setting-language"><option value="en">English</option><option value="de">Deutsch</option></select></label>
+            <div class="form-row">
+              <label for="setting-theme">Appearance<select id="setting-theme"><option value="system">Automatic</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+              <label for="setting-palette">Theme<select id="setting-palette"><option value="orbit">Orbit · Original</option><option value="ocean">Ocean</option><option value="sand">Sand</option><option value="lavender">Lavender</option><option value="graphite">Graphite</option></select></label>
+            </div>
+            <p>Automatic follows your system. Every theme supports light and dark. Preview changes immediately; Save keeps them.</p>
+          </section>
+          <section class="settings-section">
+            <label class="settings-toggle"><input type="checkbox" id="setting-remember_list_preferences">Remember filters and sorting</label>
+            <p class="settings-hint">List choices are saved in this browser. Search text is not saved.</p>
+            <h3>Project columns</h3>
+            <label class="settings-toggle"><input type="checkbox" id="setting-show_storage">Show storage column</label>
+            <label class="settings-toggle"><input type="checkbox" id="setting-show_last_changed">Show last changed column</label>
+            <label class="settings-toggle"><input type="checkbox" id="setting-show_ddev">Show DDEV column when configured</label>
+            <label class="settings-toggle"><input type="checkbox" id="setting-show_next_step">Show next step column</label>
+            <p>Project, Git status and actions stay visible. Notes remain editable using the pencil.</p>
+          </section>
+          <section class="settings-section">
+            <div class="settings-heading"><h3>Readability and scale</h3><button type="button" class="button secondary" id="reset-readability">Reset to 100%</button></div>
+            <div class="readability-fields">
+              <label for="setting-density">Layout density<select id="setting-density"><option value="compact">Compact</option><option value="comfortable">Comfortable</option></select><span class="muted">Adjusts spacing and sidebar width without changing text size.</span></label>
+              <label for="setting-font_size">Font size (%)<select id="setting-font_size" required><option value="80">80%</option><option value="85">85%</option><option value="90">90%</option><option value="95">95%</option><option value="100">100%</option><option value="105">105%</option><option value="110">110%</option><option value="115">115%</option><option value="120">120%</option><option value="125">125%</option><option value="130">130%</option><option value="135">135%</option><option value="140">140%</option><option value="145">145%</option><option value="150">150%</option><option value="155">155%</option><option value="160">160%</option></select><span class="muted">Changes text size without scaling icons or spacing.</span></label>
+              <label for="setting-contrast">Contrast (%)<select id="setting-contrast" required><option value="100">100%</option><option value="105">105%</option><option value="110">110%</option><option value="115">115%</option><option value="120">120%</option><option value="125">125%</option><option value="130">130%</option><option value="135">135%</option><option value="140">140%</option><option value="145">145%</option><option value="150">150%</option><option value="155">155%</option><option value="160">160%</option><option value="165">165%</option><option value="170">170%</option><option value="175">175%</option><option value="180">180%</option><option value="185">185%</option><option value="190">190%</option><option value="195">195%</option><option value="200">200%</option></select><span class="muted">Makes text and borders more distinct within the selected theme.</span></label>
+              <label for="setting-zoom">Overall zoom (%)<select id="setting-zoom" required><option value="70">70%</option><option value="75">75%</option><option value="80">80%</option><option value="85">85%</option><option value="90">90%</option><option value="95">95%</option><option value="100">100%</option><option value="105">105%</option><option value="110">110%</option><option value="115">115%</option><option value="120">120%</option><option value="125">125%</option><option value="130">130%</option><option value="135">135%</option><option value="140">140%</option><option value="145">145%</option><option value="150">150%</option><option value="155">155%</option><option value="160">160%</option><option value="165">165%</option><option value="170">170%</option><option value="175">175%</option><option value="180">180%</option><option value="185">185%</option><option value="190">190%</option><option value="195">195%</option><option value="200">200%</option></select><span class="muted">Scales the whole interface, including icons and spacing.</span></label>
+            </div>
+          </section>
+        </div>
+
+        <div class="settings-panel" id="settings-panel-tools" role="tabpanel" aria-labelledby="settings-tab-tools" tabindex="0" hidden>
+          <section class="settings-section">
+            <h3>Tools</h3>
+            <label class="settings-toggle"><input type="checkbox" id="setting-ddev_enabled">Check DDEV projects</label>
+            <label class="settings-toggle"><input type="checkbox" id="setting-docker_enabled">Check Docker and Colima</label>
+            <div class="form-row">
+              <label for="setting-terminal">Terminal<select id="setting-terminal"><option value="auto">Automatic</option><option>cmux</option><option>Terminal</option><option>iTerm</option><option value="none">Disabled</option></select></label>
+              <label for="setting-editor">Editor<select id="setting-editor"><option value="none">None</option><option>Visual Studio Code</option><option>Cursor</option><option>PyCharm</option><option>IntelliJ IDEA</option></select></label>
+            </div>
+          </section>
+        </div>
+
+        <div class="settings-panel" id="settings-panel-server" role="tabpanel" aria-labelledby="settings-tab-server" tabindex="0" hidden>
+          <section class="settings-section">
+            <div class="settings-heading">
+              <h3>Servers</h3>
+              <button type="button" class="button secondary" id="add-server">Add server</button>
+            </div>
+            <p>Use existing SSH access with an optional status command, explicitly permitted automatic queries, or both. Orbit does not install anything on your servers.</p>
+            <div id="settings-servers"></div>
+          </section>
+        </div>
+
+        <div class="settings-panel" id="settings-panel-advanced" role="tabpanel" aria-labelledby="settings-tab-advanced" tabindex="0" hidden>
+          <section class="settings-section">
+            <h3>Project discovery</h3>
+            <label for="setting-scan_depth">Search depth<input id="setting-scan_depth" type="number" min="1" max="12" required></label>
+            <label for="setting-excluded_dirs">Excluded folder names<textarea id="setting-excluded_dirs" rows="4" placeholder="One folder name per line"></textarea></label>
+            <p>Hidden folders and symbolic links are always skipped.</p>
+          </section>
+          <section class="settings-section">
+            <h3>Refresh intervals</h3>
+            <p>How often Orbit checks each value. Frequent folder size scans may use more system resources.</p>
+            <div id="settings-intervals"></div>
+          </section>
+        </div>
+      </div>
+
+      <p id="settings-error" class="notice" role="alert" hidden></p>
+      <div class="dialog-actions">
+        <button type="button" class="button secondary close-settings">Cancel</button>
+        <button class="button primary" id="save-settings">Save<span data-icon="arrow"></span></button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" role="status" hidden></div>
+</body>
+</html>

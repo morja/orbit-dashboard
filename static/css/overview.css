@@ -1,0 +1,499 @@
+/* Overview: summary tiles, attention list and the server summary. */
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 23px;
+}
+
+/* A column layout also keeps the Git tile, which is a button, aligned to the top. */
+.metric {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 19px 20px;
+  box-shadow: var(--shadow);
+}
+
+.metric.metric-filter {
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  width: 100%;
+}
+
+.metric-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 0.6875rem;
+}
+
+.metric-top svg {
+  color: var(--leaf);
+  width: 16px;
+  height: 16px;
+}
+
+.metric-value {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 1.75rem;
+  font-weight: 550;
+  letter-spacing: -1px;
+  color: var(--ink);
+  margin: 11px 0 3px;
+}
+
+.metric-value small {
+  font-size: 0.75rem;
+  letter-spacing: 0;
+  color: var(--faint);
+  font-weight: 400;
+}
+
+.metric-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.625rem;
+  color: var(--faint);
+  gap: 8px;
+}
+
+.metric-filter .metric-bottom span:last-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.docker-metric .scope {
+  margin: 9px 0 0;
+  font-size: 0.625rem;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 22px;
+  margin-bottom: 25px;
+}
+
+/* Needs your attention */
+
+.attention-list {
+  display: grid;
+  gap: 0;
+}
+
+.attention-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.attention-row:first-child {
+  border: 0;
+}
+
+.attention-row .attention-icon {
+  background: var(--amber-bg);
+  color: var(--amber-text);
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.attention-row.info .attention-icon {
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+
+.attention-row .attention-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.attention-row strong {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 500;
+}
+
+.attention-row p {
+  font-size: 0.625rem;
+  color: var(--muted);
+  margin: 2px 0 0;
+}
+
+.attention-row button {
+  margin-left: auto;
+}
+
+/* Server summary */
+
+.service-dots {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 11px 9px;
+}
+
+.service-dot {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.625rem;
+  color: var(--muted);
+}
+
+.service-dot i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--leaf);
+  flex: none;
+}
+
+.service-dot.bad i {
+  background: var(--red-mark);
+}
+
+.service-dot.unknown i {
+  background: var(--faint);
+}
+
+.moon-summary {
+  border-top: 1px solid var(--line);
+  margin-top: 16px;
+  padding-top: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.625rem;
+  color: var(--muted);
+}
+
+.moon-summary b {
+  font-weight: 500;
+  color: var(--accent-text);
+}
+
+@media (min-width: 1550px) {
+  .metric {
+    padding: 23px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .metric {
+    padding: 15px;
+  }
+
+  .metric-value {
+    font-size: 1.5rem;
+  }
+
+  .service-dots {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .columns {
+    grid-template-columns: 1fr;
+  }
+
+  .service-dots {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 650px) {
+  .metrics {
+    gap: 10px;
+  }
+
+  .metric {
+    padding: 14px;
+  }
+
+  .metric-top {
+    font-size: 0.625rem;
+  }
+
+  .metric-value {
+    font-size: 1.5rem;
+  }
+
+  .metric-bottom {
+    font-size: 0.5625rem;
+  }
+
+  .service-dots {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Variant C: one quiet status strip, with projects beside workspace health. */
+.overview-status {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(135px,1fr));
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--paper);
+  padding: 16px 0;
+  margin-bottom: 20px;
+}
+
+.overview-status .metric {
+  padding: 0 18px;
+  border: 0;
+  border-left: 1px solid var(--line);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  min-width: 0;
+}
+
+.overview-status .metric:first-child {
+  border-left: 0;
+}
+
+.overview-status .metric-top {
+  font-size: .6875rem;
+  gap: 8px;
+}
+
+.overview-status .metric-value {
+  font-size: 1.5625rem;
+  margin: 5px 0;
+}
+
+.overview-status .metric-value small {
+  font-size: .6875rem;
+}
+
+.overview-status .metric-bottom {
+  font-size: .625rem;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.overview-status .metric-bottom>span:last-child:not(:first-child) {
+  display: none;
+}
+
+.overview-status .meter {
+  display: none;
+}
+
+.overview-status .scope {
+  font-size: .625rem;
+  margin: 5px 0 0;
+}
+
+.overview-workspace {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) clamp(275px,23%,350px);
+  gap: 18px;
+  align-items: start;
+}
+
+.overview-workspace>.project-section {
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.overview-rail {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.overview-rail .panel {
+  padding: 18px;
+  min-width: 0;
+}
+
+.overview-rail h2 {
+  font-size: .875rem;
+  flex-wrap: wrap;
+}
+
+.overview-rail .section-heading {
+  gap: 8px;
+}
+
+.overview-rail .attention-row {
+  padding: 10px 0;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.overview-rail .attention-row>div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.overview-rail .attention-row strong {
+  font-size: .75rem;
+}
+
+.overview-rail .attention-row p {
+  font-size: .6875rem;
+}
+
+.overview-rail .attention-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.overview-rail .attention-row .icon-button {
+  margin-left: auto;
+  flex: none;
+}
+
+.overview-rail .moon-summary {
+  flex-wrap: wrap;
+  font-size: .6875rem;
+  margin-top: 12px;
+  padding-top: 10px;
+}
+
+.overview-rail .moon-summary b {
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+
+.server-services summary {
+  font-size: .6875rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.server-services .service-dots {
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  margin-top: 12px;
+}
+
+.server-services .service-dot {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+@container (max-width:850px) {
+  .overview-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .overview-rail {
+    grid-template-columns: repeat(auto-fit,minmax(min(245px,100%),1fr));
+  }
+
+}
+
+@container (max-width:720px) {
+  .overview-status {
+    grid-template-columns: repeat(3,minmax(0,1fr));
+    gap: 16px 0;
+  }
+
+  .overview-status .metric:nth-child(4) {
+    border-left: 0;
+  }
+
+  .overview-status .metric {
+    padding: 0 12px;
+  }
+
+  .overview-status .metric-top svg {
+    display: none;
+  }
+
+}
+
+@container (max-width:460px) {
+  .overview-status {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+
+  .overview-status .metric:nth-child(odd) {
+    border-left: 0;
+  }
+
+  .overview-status .metric:nth-child(even) {
+    border-left: 1px solid var(--line);
+  }
+
+}
+
+.overview-status .metric-value {
+  flex-wrap: wrap;
+}
+
+.overview-rail h2 {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.overview-rail .section-heading {
+  flex-wrap: wrap;
+}
+
+@container (max-width:300px) {
+  .overview-status {
+    grid-template-columns: 1fr;
+  }
+
+  .overview-status .metric:nth-child(n) {
+    border-left: 0;
+  }
+
+}
+
+.overview-workspace {
+  gap: var(--page-gap);
+}
+
+.overview-rail {
+  gap: var(--page-gap);
+  padding-top: 46px;
+}
+
+:root[data-density="comfortable"] .overview-status {
+  padding-top: 22px;
+  padding-bottom: 22px;
+}
+
+:root[data-density="comfortable"] .attention-row {
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+@container (max-width: 850px) {
+  .overview-rail {
+    padding-top: 0;
+  }
+}

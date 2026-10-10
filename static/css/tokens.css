@@ -1,0 +1,211 @@
+/*
+ * Design tokens for the default Orbit palette.
+ * Light values apply by default, dark values follow the system, and
+ * data-theme="light" or "dark" on <html> overrides the system choice.
+ * Further palettes in themes.css redefine the same tokens.
+ */
+
+:root {
+  --bg: #f4f5f0;
+  --paper: #fff;
+  --soft: #fafbf7;
+  --hover: #edf0e7;
+  --active: #e9eedf;
+  --active-line: #d8e2c8;
+  --active-ink: #35503f;
+  --ink: #263b33;
+  --text: #33463d;
+  --muted: #717c72;
+  --faint: #949d8b;
+  --line: #e7eae2;
+  --line-soft: #eef0e8;
+  --line-strong: #d9dfce;
+  --green: #41664e;
+  --accent-text: #5f7848;
+  --leaf: #9eb678;
+  --leaf-soft: #becd9e;
+  --leaf-bg: #eef1e7;
+  --lime: #dce9b7;
+  --ok: #6c8455;
+  --ok-bg: #eef2e7;
+  --amber: #a5732b;
+  --amber-text: #9d7840;
+  --amber-bg: #fbf2e2;
+  --amber-soft-bg: #fcf7ed;
+  --amber-line: #e8d6bb;
+  --amber-mark: #c59958;
+  --red: #b65c4e;
+  --red-text: #ae7061;
+  --red-bg: #f8ebe7;
+  --red-mark: #bb786a;
+  --grey-text: #8d968a;
+  --grey-bg: #f0f1ed;
+  --on-ink: #fff;
+  --focus: #9fbd7c;
+  --avatar-1: #e7eddc;
+  --avatar-2: #e4ebee;
+  --avatar-3: #efe8dc;
+  --avatar-4: #ebe5ed;
+  --avatar-5: #e5ece3;
+  --avatar-6: #f0e5e0;
+  --shadow: 0 3px 18px #263b3304;
+  --shadow-dialog: 0 25px 100px #213b3320;
+  --shadow-toast: 0 10px 35px #24362b30;
+  --backdrop: #24362b40;
+  --radius: 16px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, monospace;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121815;
+    --paper: #1a221d;
+    --soft: #1e2721;
+    --hover: #253029;
+    --active: #2a382c;
+    --active-line: #3b4d36;
+    --active-ink: #d2e4bf;
+    --ink: #e6ede3;
+    --text: #cbd5c9;
+    --muted: #9ca89d;
+    --faint: #808c81;
+    --line: #29332d;
+    --line-soft: #232c26;
+    --line-strong: #36423a;
+    --green: #9cc08a;
+    --accent-text: #a9c793;
+    --leaf: #86a666;
+    --leaf-soft: #5b7347;
+    --leaf-bg: #252f28;
+    --lime: #3d4f2c;
+    --ok: #a7c78e;
+    --ok-bg: #243228;
+    --amber: #dcae6c;
+    --amber-text: #d9ad6e;
+    --amber-bg: #35291a;
+    --amber-soft-bg: #2c2519;
+    --amber-line: #57452a;
+    --amber-mark: #c99f60;
+    --red: #e0998a;
+    --red-text: #e0a091;
+    --red-bg: #3a2420;
+    --red-mark: #c98475;
+    --grey-text: #9aa39a;
+    --grey-bg: #252c27;
+    --on-ink: #16201a;
+    --focus: #7d9c5f;
+    --avatar-1: #2c3826;
+    --avatar-2: #26323a;
+    --avatar-3: #3a3324;
+    --avatar-4: #332c38;
+    --avatar-5: #283426;
+    --avatar-6: #3b2b26;
+    --shadow: 0 3px 18px #00000030;
+    --shadow-dialog: 0 25px 100px #00000080;
+    --shadow-toast: 0 10px 35px #00000066;
+    --backdrop: #000000a0;
+  }
+}
+
+/* Appearance chosen in Settings, independent of the system. */
+:root[data-theme="light"] {
+  --bg: #f4f5f0;
+  --paper: #fff;
+  --soft: #fafbf7;
+  --hover: #edf0e7;
+  --active: #e9eedf;
+  --active-line: #d8e2c8;
+  --active-ink: #35503f;
+  --ink: #263b33;
+  --text: #33463d;
+  --muted: #717c72;
+  --faint: #949d8b;
+  --line: #e7eae2;
+  --line-soft: #eef0e8;
+  --line-strong: #d9dfce;
+  --green: #41664e;
+  --accent-text: #5f7848;
+  --leaf: #9eb678;
+  --leaf-soft: #becd9e;
+  --leaf-bg: #eef1e7;
+  --lime: #dce9b7;
+  --ok: #6c8455;
+  --ok-bg: #eef2e7;
+  --amber: #a5732b;
+  --amber-text: #9d7840;
+  --amber-bg: #fbf2e2;
+  --amber-soft-bg: #fcf7ed;
+  --amber-line: #e8d6bb;
+  --amber-mark: #c59958;
+  --red: #b65c4e;
+  --red-text: #ae7061;
+  --red-bg: #f8ebe7;
+  --red-mark: #bb786a;
+  --grey-text: #8d968a;
+  --grey-bg: #f0f1ed;
+  --on-ink: #fff;
+  --focus: #9fbd7c;
+  --avatar-1: #e7eddc;
+  --avatar-2: #e4ebee;
+  --avatar-3: #efe8dc;
+  --avatar-4: #ebe5ed;
+  --avatar-5: #e5ece3;
+  --avatar-6: #f0e5e0;
+  --shadow: 0 3px 18px #263b3304;
+  --shadow-dialog: 0 25px 100px #213b3320;
+  --shadow-toast: 0 10px 35px #24362b30;
+  --backdrop: #24362b40;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #121815;
+  --paper: #1a221d;
+  --soft: #1e2721;
+  --hover: #253029;
+  --active: #2a382c;
+  --active-line: #3b4d36;
+  --active-ink: #d2e4bf;
+  --ink: #e6ede3;
+  --text: #cbd5c9;
+  --muted: #9ca89d;
+  --faint: #808c81;
+  --line: #29332d;
+  --line-soft: #232c26;
+  --line-strong: #36423a;
+  --green: #9cc08a;
+  --accent-text: #a9c793;
+  --leaf: #86a666;
+  --leaf-soft: #5b7347;
+  --leaf-bg: #252f28;
+  --lime: #3d4f2c;
+  --ok: #a7c78e;
+  --ok-bg: #243228;
+  --amber: #dcae6c;
+  --amber-text: #d9ad6e;
+  --amber-bg: #35291a;
+  --amber-soft-bg: #2c2519;
+  --amber-line: #57452a;
+  --amber-mark: #c99f60;
+  --red: #e0998a;
+  --red-text: #e0a091;
+  --red-bg: #3a2420;
+  --red-mark: #c98475;
+  --grey-text: #9aa39a;
+  --grey-bg: #252c27;
+  --on-ink: #16201a;
+  --focus: #7d9c5f;
+  --avatar-1: #2c3826;
+  --avatar-2: #26323a;
+  --avatar-3: #3a3324;
+  --avatar-4: #332c38;
+  --avatar-5: #283426;
+  --avatar-6: #3b2b26;
+  --shadow: 0 3px 18px #00000030;
+  --shadow-dialog: 0 25px 100px #00000080;
+  --shadow-toast: 0 10px 35px #00000066;
+  --backdrop: #000000a0;
+  color-scheme: dark;
+}

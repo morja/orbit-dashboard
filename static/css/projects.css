@@ -1,0 +1,600 @@
+/* Project list: category tabs, filters and the project table. */
+
+.project-section {
+  margin: 0 0 25px;
+}
+
+.project-tools {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.project-tools select {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--soft);
+  padding: 6px 9px;
+  color: var(--muted);
+  font-size: 0.625rem;
+  max-width: 190px;
+}
+
+/* Category tabs with the archive switch */
+
+.category-bar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 6px 16px;
+  padding: 4px 17px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.category-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.category-tab {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: none;
+  padding: 11px 10px 10px;
+  color: var(--text);
+  font-size: 0.6875rem;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.category-tab:hover {
+  color: var(--ink);
+}
+
+.category-tab[aria-pressed="true"] {
+  color: var(--ink);
+  border-bottom-color: var(--green);
+  font-weight: 600;
+}
+
+.filter-count {
+  font-size: 0.5625rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+
+.category-tab[aria-pressed="true"] .filter-count,
+.filter[aria-pressed="true"] .filter-count {
+  color: var(--accent-text);
+}
+
+#category-select {
+  display: none;
+}
+
+.archive-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 11px;
+  font-size: 0.625rem;
+  color: var(--text);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.archive-switch input {
+  appearance: none;
+  width: 26px;
+  height: 15px;
+  border-radius: 15px;
+  background: var(--faint);
+  position: relative;
+  margin: 0;
+  cursor: pointer;
+  flex: none;
+  transition: background 0.15s;
+}
+
+.archive-switch input::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--paper);
+  transition: transform 0.15s;
+}
+
+.archive-switch input:checked {
+  background: var(--green);
+}
+
+.archive-switch input:checked::after {
+  transform: translateX(11px);
+}
+
+/* Search, state filters and group */
+
+.tool-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  padding: 12px 17px;
+}
+
+.search-box {
+  position: relative;
+  flex: 0 1 280px;
+  min-width: 160px;
+}
+
+.search-box svg {
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 14px;
+  height: 14px;
+  color: var(--faint);
+}
+
+.search-box input {
+  width: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  padding: 5px 10px 5px 23px;
+  font-size: 0.6875rem;
+  color: var(--text);
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line-strong);
+  background: var(--paper);
+  color: var(--text);
+  border-radius: 20px;
+  padding: 5px 11px;
+  font-size: 0.625rem;
+  white-space: nowrap;
+}
+
+.filter:hover {
+  background: var(--hover);
+  border-color: var(--active-line);
+  color: var(--active-ink);
+}
+
+.filter[aria-pressed="true"] {
+  background: var(--active);
+  border-color: var(--active-line);
+  color: var(--active-ink);
+}
+
+.filter:disabled {
+  opacity: 0.55;
+  border-color: var(--line);
+  cursor: default;
+}
+
+.filter svg {
+  width: 11px;
+  height: 11px;
+  margin-right: -3px;
+}
+
+.tool-row #group {
+  margin-left: auto;
+}
+
+.result-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 8px 17px;
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  font-size: 0.625rem;
+  color: var(--muted);
+}
+
+.result-bar:empty {
+  display: none;
+}
+
+.result-bar b {
+  color: var(--ink);
+  font-weight: 550;
+}
+
+.reset-filters {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--accent-text);
+  font-size: 0.625rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--active-line);
+}
+
+/* Project table */
+
+.project-table th {
+  font-size: 0.625rem;
+  letter-spacing: 0;
+}
+
+th[aria-sort="ascending"],
+th[aria-sort="descending"] {
+  color: var(--active-ink);
+}
+
+.column-sort {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  white-space: nowrap;
+}
+
+.column-sort:hover {
+  color: var(--green);
+}
+
+.column-sort span {
+  font-size: 0.6875rem;
+  opacity: 0.7;
+}
+
+.project-name {
+  display: flex;
+  gap: 11px;
+  align-items: center;
+}
+
+.project-avatar {
+  width: 31px;
+  height: 31px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-size: 0.6875rem;
+  font-weight: 550;
+  flex: none;
+}
+
+.project-name strong {
+  font-size: 0.6875rem;
+  font-weight: 550;
+  color: var(--text);
+  display: block;
+}
+
+.project-name small {
+  display: block;
+  color: var(--faint);
+  font-size: 0.5625rem;
+  margin-top: 2px;
+}
+
+.project-path {
+  display: block;
+  margin-top: 3px;
+  font: 0.5625rem/1.5 var(--font-mono);
+  color: var(--faint);
+  width: clamp(160px, 22vw, 440px);
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.name-button {
+  border: 0;
+  background: none;
+  text-align: left;
+  padding: 0;
+  color: inherit;
+}
+
+.name-button:hover strong {
+  text-decoration: underline;
+}
+
+.size-cell {
+  color: var(--muted);
+}
+
+.git-preview {
+  border: 0;
+  padding: 0;
+  background: none;
+}
+
+.git-preview:hover .badge {
+  box-shadow: 0 0 0 2px var(--line-strong);
+}
+
+.branch {
+  font-size: 0.5625rem;
+  color: var(--faint);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.branch svg {
+  width: 11px;
+  height: 11px;
+}
+
+.modified-cell {
+  color: var(--faint);
+  font-size: 0.625rem;
+}
+
+.next-cell {
+  white-space: normal;
+  min-width: 170px;
+  max-width: 270px;
+}
+
+.note-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  color: var(--muted);
+  font-size: 0.625rem;
+  line-height: 1.5;
+  width: 100%;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.note-button.empty {
+  color: var(--faint);
+}
+
+.note-button:hover {
+  color: var(--green);
+}
+
+.project-status {
+  margin-top: 4px;
+  font-size: 0.5625rem;
+  color: var(--amber-text);
+}
+
+.row-actions {
+  display: flex;
+  gap: 3px;
+}
+
+.row-actions svg {
+  width: 14px;
+  height: 14px;
+}
+
+.table-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.625rem;
+  color: var(--faint);
+  margin-top: 11px;
+  gap: 12px;
+}
+
+@media (max-width: 1200px) {
+  .next-cell {
+    min-width: 140px;
+  }
+}
+
+@media (max-width: 900px) {
+  .category-tabs {
+    display: none;
+  }
+
+  #category-select {
+    display: block;
+    margin: 10px 0;
+  }
+
+  .category-bar {
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .archive-switch {
+    padding-bottom: 0;
+  }
+
+  .tool-row .search-box {
+    flex: 1 1 100%;
+  }
+
+  .tool-row #group {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 650px) {
+  .project-tools select {
+    max-width: 150px;
+  }
+
+  .table-footer {
+    font-size: 0.5625rem;
+  }
+}
+
+/* The full Projects view retains all columns; the overview keeps the essentials. */
+.overview-workspace .project-path {
+  display: none;
+}
+
+.overview-workspace .project-table th, .overview-workspace .project-table td {
+  padding: 11px 12px;
+}
+
+.overview-workspace .project-name strong {
+  font-size: .75rem;
+}
+
+.overview-workspace .project-name small {
+  font-size: .625rem;
+}
+
+.overview-workspace .category-tab {
+  padding: 10px 8px;
+}
+
+.overview-workspace .tool-row {
+  padding: 10px 14px;
+  gap: 8px;
+}
+
+.overview-workspace .search-box {
+  flex: 1 1 220px;
+}
+
+@container (max-width:1100px) {
+  .overview-workspace .project-table .next-heading, .overview-workspace .next-cell {
+    display: none;
+  }
+
+}
+
+@container (max-width:880px) {
+  .overview-workspace .category-tabs {
+    display: none;
+  }
+
+  .overview-workspace #category-select {
+    display: block;
+    margin: 8px 0;
+  }
+
+  .overview-workspace .category-bar {
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .overview-workspace .archive-switch {
+    padding-bottom: 0;
+  }
+
+}
+
+.overview-workspace .tool-row .search-box {
+  flex: 1 1 200px;
+  order: 0;
+}
+
+.overview-workspace .tool-row #group {
+  order: 1;
+  flex: none;
+  margin-left: auto;
+}
+
+.overview-workspace .tool-row .filters {
+  order: 2;
+  flex: 1 1 100%;
+}
+
+.overview-workspace .filter:disabled {
+  display: none;
+}
+
+.overview-workspace .section-heading, .overview-workspace .table-footer {
+  flex-wrap: wrap;
+}
+
+.overview-workspace .project-tools select {
+  max-width: 100%;
+}
+
+.overview-workspace .filter {
+  white-space: normal;
+  max-width: 100%;
+}
+
+.overview-workspace .filter-count {
+  flex: none;
+}
+
+body[data-view="projects"] .project-table td,
+body[data-view="projects"] .project-table th {
+  padding: 11px 12px;
+}
+body[data-view="projects"] .tool-row {
+  padding: 10px 14px;
+  gap: 8px;
+}
+body[data-view="projects"] .category-tab {
+  padding: 10px 8px;
+}
+body[data-view="projects"] .section-heading,
+body[data-view="projects"] .table-footer {
+  flex-wrap: wrap;
+}
+
+.project-tools select {
+  max-width: 100%;
+}
+
+.filter {
+  white-space: normal;
+}
+
+:root[data-density="comfortable"] .project-table td {
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+/* Keep short metadata readable while the column group balances available width. */
+.project-table .git-cell, .project-table .modified-cell, .project-table .ddev-cell, .project-table .size-cell, .project-table .actions-cell {
+  white-space: nowrap;
+}
+
+/* Keep overview controls on one line when their container has room. */
+@container (min-width: 760px) {
+  .overview-workspace .tool-row .search-box { flex: 1 1 200px; min-width: 170px; }
+  .overview-workspace .tool-row .filters { order: 1; flex: 0 1 auto; }
+  .overview-workspace .tool-row #group { order: 2; margin-left: 0; max-width: 140px; }
+  .overview-workspace .filter { white-space: nowrap; }
+}
+
+@container (max-width: 1100px) {
+  .overview-workspace .project-table col.next-column { display: none; }
+}

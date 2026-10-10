@@ -1,0 +1,108 @@
+/* Dialogs: shared frame, form fields, the project note and the Git file preview. */
+
+dialog {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 27px;
+  width: min(550px, calc(100vw / var(--ui-zoom, 1) - 32px));
+  max-height: calc(90vh / var(--ui-zoom, 1));
+  overflow-y: auto;
+  color: var(--text);
+  box-shadow: var(--shadow-dialog);
+}
+
+dialog::backdrop {
+  background: var(--backdrop);
+  backdrop-filter: blur(3px);
+}
+
+.dialog-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.dialog-heading h2 {
+  font-size: 1.4375rem;
+  margin: 5px 0;
+  letter-spacing: -0.6px;
+  font-weight: 550;
+}
+
+.dialog-heading .icon-button {
+  align-self: flex-start;
+}
+
+dialog label {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  margin-bottom: 7px;
+  margin-top: 20px;
+}
+
+dialog textarea,
+dialog select {
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  padding: 10px;
+  color: var(--ink);
+  background: var(--soft);
+  resize: vertical;
+  font-size: 0.75rem;
+}
+
+dialog h3 {
+  font-size: 0.75rem;
+  margin-top: 22px;
+  font-weight: 550;
+}
+
+dialog > p {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 25px;
+}
+
+/* Git file preview */
+
+.git-files {
+  display: grid;
+  margin-top: 18px;
+}
+
+.git-files > div {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  justify-content: space-between;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.git-files code {
+  font: 0.6875rem/1.6 var(--font-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.git-files span {
+  font-size: 0.5625rem;
+  color: var(--faint);
+  flex: none;
+}

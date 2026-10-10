@@ -1,0 +1,199 @@
+/* Storage view: Mac capacity, history chart and the largest projects. Docker reuses the two-column layout. */
+
+.storage-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  margin-bottom: 25px;
+}
+
+.storage-total {
+  display: flex;
+  gap: 25px;
+  align-items: center;
+  padding: 18px 0;
+}
+
+.donut {
+  width: 132px;
+  height: 132px;
+  flex: none;
+  position: relative;
+}
+
+.donut svg {
+  width: 100%;
+  height: 100%;
+  stroke-width: 9;
+  transform: rotate(-90deg);
+}
+
+.donut circle {
+  stroke-linecap: round;
+}
+
+.donut .donut-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4375rem;
+  color: var(--ink);
+  letter-spacing: -0.7px;
+}
+
+.donut small {
+  font-size: 0.5625rem;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+
+.storage-legend {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+}
+
+.storage-legend > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  font-size: 0.6875rem;
+}
+
+.storage-legend b {
+  font-weight: 500;
+}
+
+.chart {
+  width: 100%;
+  height: 165px;
+  display: block;
+  stroke: none;
+}
+
+.chart text {
+  font: 0.5625rem var(--font);
+  fill: var(--faint);
+}
+
+.chart .grid {
+  stroke: var(--line-soft);
+  stroke-width: 0.5;
+}
+
+.chart .curve {
+  stroke: var(--leaf);
+  stroke-width: 2;
+  fill: none;
+}
+
+.chart .area {
+  fill: var(--active);
+}
+
+.chart-note {
+  font-size: 0.625rem;
+  color: var(--muted);
+}
+
+.size-bars {
+  display: grid;
+  gap: 17px;
+}
+
+.size-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.6875rem;
+  margin-bottom: 5px;
+  gap: 10px;
+}
+
+.size-bar-label button {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--muted);
+  text-align: left;
+}
+
+.size-bar-label span {
+  font-size: 0.625rem;
+  color: var(--faint);
+}
+
+.size-bar {
+  height: 7px;
+  border-radius: 7px;
+  background: var(--leaf-bg);
+  overflow: hidden;
+}
+
+.size-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 7px;
+  background: var(--leaf-soft);
+}
+
+@media (max-width: 900px) {
+  .storage-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 650px) {
+  .storage-total {
+    gap: 18px;
+  }
+
+  .donut {
+    width: 115px;
+    height: 115px;
+  }
+}
+
+.storage-columns {
+  grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
+  gap: var(--page-gap);
+  margin-bottom: var(--page-gap);
+}
+
+.storage-total {
+  gap: 18px;
+  padding: 8px 0;
+  flex-wrap: wrap;
+}
+
+.storage-total .storage-legend {
+  flex: 1 1 150px;
+}
+
+.donut {
+  width: 108px;
+  height: 108px;
+}
+
+.storage-legend {
+  gap: 8px;
+}
+
+.storage-legend > div {
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+
+.size-bars {
+  gap: 12px;
+}
+
+.size-bar-label {
+  flex-wrap: wrap;
+}
+
+.chart {
+  height: 145px;
+}

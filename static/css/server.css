@@ -1,0 +1,227 @@
+/* Server view: one section per configured server with its status panels. */
+
+.server-section-title {
+  margin: 30px 0 12px;
+  font-size: 1.1875rem;
+  color: var(--ink);
+}
+
+.moon-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  gap: 15px;
+}
+
+.moon-heading p {
+  font-size: 0.6875rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.moon-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+}
+
+.detail-list {
+  display: grid;
+  gap: 0;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid var(--line-soft);
+  padding: 11px 0;
+  font-size: 0.6875rem;
+}
+
+.detail-row:last-child {
+  border: 0;
+}
+
+.detail-row > span:first-child {
+  color: var(--muted);
+}
+
+.detail-row > span:last-child {
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.detail-row a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.detail-row a svg {
+  width: 12px;
+  height: 12px;
+  color: var(--leaf);
+}
+
+@media (max-width: 900px) {
+  .moon-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* One server at a time keeps multiple connections easy to scan. */
+.server-workspace {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  gap: var(--page-gap);
+  align-items: start;
+}
+
+.server-details {
+  min-width: 0;
+}
+
+.server-section-title {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.server-list nav {
+  display: grid;
+  gap: 6px;
+}
+
+.server-choice {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border-radius: 8px;
+  color: var(--text);
+  border: 1px solid transparent;
+  overflow-wrap: anywhere;
+}
+
+.server-choice.active {
+  background: var(--active);
+  border-color: var(--line);
+}
+
+.server-choice:hover {
+  background: var(--hover);
+}
+
+.server-choice strong {
+  font-size: .8125rem;
+  font-weight: 550;
+}
+
+.server-choice-host {
+  font-size: .6875rem;
+  color: var(--muted);
+}
+
+.server-choice .badge {
+  justify-self: start;
+  white-space: normal;
+}
+
+.server-list .setup-settings {
+  margin-top: 12px;
+}
+
+.moon-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+  gap: var(--page-gap);
+}
+
+.detail-row {
+  padding: 8px 0;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.detail-row > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@container page (max-width: 850px) {
+  .server-workspace {
+    grid-template-columns: 1fr;
+  }
+  .server-list nav {
+    grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+  }
+}
+
+/* Long connection names and large text still fit the narrow detail column. */
+.moon-heading {
+  flex-wrap: wrap;
+}
+
+.moon-heading p, .server-section-title {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.server-list .section-heading h2 {
+  flex-wrap: wrap;
+}
+
+.server-list .setup-settings, .server-details .badge {
+  white-space: normal;
+  max-width: 100%;
+}
+
+.server-details .notice {
+  overflow-wrap: anywhere;
+}
+
+.server-choice {
+  min-width: 0;
+}
+
+
+/* Short facts stay above the lists; neighbouring cards never stretch each other. */
+.moon-grid {
+  align-items: start;
+}
+
+.server-facts {
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+  margin-bottom: var(--page-gap);
+}
+
+.server-lists {
+  grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr));
+}
+
+.server-disk-chart, .server-ram-chart { margin-bottom: 18px; color: var(--muted); }
+.server-disk-chart strong, .server-ram-chart strong { font-size: 2rem; color: var(--text); margin-right: 10px; }
+.server-disk-track { height: 7px; margin-top: 12px; border-radius: 8px; background: var(--line); overflow: hidden; }
+.server-disk-track i { display: block; height: 100%; background: var(--leaf); }
+
+.server-resource-meters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 16px;
+}
+.server-resource-meters > div > span { display: block; margin-top: 4px; }
+.server-addresses { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+.server-address {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  overflow-wrap: anywhere;
+  text-align: left;
+  padding: 4px 7px;
+  border-radius: 5px;
+  background: var(--soft);
+  max-width: 100%;
+}
+
+.server-ip-row { display: block; }
+.server-ip-row > span:first-child { display: block; margin-bottom: 8px; }
+.server-ip-row .server-addresses { align-items: flex-start; }

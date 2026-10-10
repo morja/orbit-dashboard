@@ -1,0 +1,16 @@
+/*
+ * Orbit stylesheet entry. Order matters: tokens first, shared parts next,
+ * then one file per view, and palettes last so they can redefine tokens.
+ */
+
+@import url("tokens.css");
+@import url("base.css");
+@import url("layout.css");
+@import url("dialogs.css");
+@import url("overview.css");
+@import url("projects.css");
+@import url("server.css");
+@import url("docker.css");
+@import url("storage.css");
+@import url("settings.css");
+@import url("themes.css");
