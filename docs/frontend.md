@@ -134,3 +134,7 @@ list; DDEV and Docker keep independent selections. Search strings are excluded.
 it clears saved selections but leaves the current session intact. Filter resets
 clear search and filters in their own list, preserving sorting. Storage errors or
 invalid saved values fall back to defaults without blocking the dashboard.
+
+The native WebKit window uses a persistent website data store so these local choices
+also survive quitting the Mac app. Settings and notes continue to live in `data/`.
+Native regression checks verify browser storage across separate app processes.

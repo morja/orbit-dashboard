@@ -44,6 +44,13 @@ def main():
     wait_for(lambda: not healthy())
     print("Native WebKit UI and normal shutdown passed")
 
+    # The native window must retain browser-local filters across separate launches.
+    for mode in ('write', 'read'):
+        result = subprocess.run([str(binary), '--smoke-storage-' + mode], capture_output=True, text=True, timeout=65)
+        assert result.returncode == 0, mode + ": " + result.stderr
+        wait_for(lambda: not healthy())
+    print("Native browser storage survives app restart")
+
     # A forced app exit must not leave the server and its collectors behind.
     app = subprocess.Popen([str(binary)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:

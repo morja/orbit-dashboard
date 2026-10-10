@@ -50,3 +50,31 @@ with every supported Python version, older macOS releases or a second Mac.
   The remaining setup verification is a README/AI prompt rehearsal on a second Mac.
 
 See [the release checklist](release-checklist.md) for exporting and publishing.
+
+## Public-repository onboarding rehearsal
+
+On 10 October 2026, two new copies were cloned anonymously over HTTPS from the
+public GitHub repository. A Python virtual environment without pip or third-party
+packages was used. Source folders contained spaces. No existing Orbit data was copied.
+
+The real browser backend, rather than a stubbed fixture server, was exercised with
+synthetic project folders. English defaults scanned nothing and enabled no optional
+integration. In-app configuration selected only the intended project; settings,
+project IDs and notes survived backend reopening. Environment detection made no
+configuration changes. Git status remained clean after setup.
+
+The README AI workflow was rehearsed separately: read project instructions, check
+prerequisites, suggest conventional folders, choose a synthetic workspace, validate
+`config.example.json` and save only local settings. The real backend loaded that
+configuration and retained notes and settings after reopening. No project Git
+operations, container operations or SSH activation were needed during setup.
+
+One native issue was found: WebKit's transient website data store discarded local
+filter/sort choices on app quit. Developer Preview 2 uses the persistent store. A
+regression check failed against the original store and passed with the fix across
+two separate native processes. The native build and lifecycle were tested using an
+isolated app identity and the virtual environment's interpreter.
+
+This is a clean local setup rehearsal, not a second-Mac or clean macOS installation.
+Python and Apple developer tools were already installed. Missing-prerequisite
+installation and compatibility with the minimum Python version remain unverified.

@@ -19,7 +19,9 @@ final class OrbitApp: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavig
     private var attempts = 0
     private var probing = false
     private var closing = false
-    private let smokeTest = CommandLine.arguments.contains("--smoke-test")
+    private let smokeTest = ["--smoke-test", "--smoke-storage-write", "--smoke-storage-read"].contains { CommandLine.arguments.contains($0) }
+    private let storageWrite = CommandLine.arguments.contains("--smoke-storage-write")
+    private let storageRead = CommandLine.arguments.contains("--smoke-storage-read")
     private let url = URL(string: "http://127.0.0.1:8765/")!
 
     private var project: URL {
@@ -86,7 +88,8 @@ final class OrbitApp: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavig
 
         let configuration = WKWebViewConfiguration()
         configuration.userContentController.add(self, name: "languageChanged")
-        configuration.websiteDataStore = .nonPersistent()
+        // Keep browser-local filters and sidebar state when the app is closed.
+        configuration.websiteDataStore = .default()
         webView = WKWebView(frame: window.contentView!.bounds, configuration: configuration)
         webView.autoresizingMask = [.width, .height]
         webView.navigationDelegate = self
@@ -254,8 +257,20 @@ final class OrbitApp: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavig
     }
 
     private func checkUI(_ remaining: Int = 160) {
+        let storageMode = storageWrite ? "write" : storageRead ? "read" : ""
         let script = """
         (() => {
+          const storageMode = "\(storageMode)";
+          // A test-only marker verifies the real WebKit store across process exits.
+          if (storageMode === 'write') {
+            localStorage.setItem('orbit-native-storage-check', 'saved');
+            return 'ok';
+          }
+          if (storageMode === 'read') {
+            const restored = localStorage.getItem('orbit-native-storage-check') === 'saved';
+            localStorage.removeItem('orbit-native-storage-check');
+            return restored ? 'ok' : 'browser storage was lost on quit';
+          }
           if (!document.querySelector('#project-table tbody .project-path')) return 'waiting';
           if (!/^[0-9a-f]{64}$/.test(window.orbitActionKey || '')) return 'missing action key';
           document.querySelector('nav [data-view="projects"]').click();
@@ -268,7 +283,12 @@ final class OrbitApp: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavig
             guard let self else { return }
             if result as? String == "ok" {
                 print("Orbit native smoke test passed: WebKit, project list, category buttons. Owned backend: \(self.backend != nil)")
-                NSApp.terminate(nil)
+                if self.storageWrite {
+                    // Let WebKit finish its asynchronous localStorage disk checkpoint.
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) { NSApp.terminate(nil) }
+                } else {
+                    NSApp.terminate(nil)
+                }
             } else if (result as? String == "waiting" || error != nil) && remaining > 0 {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { self.checkUI(remaining - 1) }
             } else {
