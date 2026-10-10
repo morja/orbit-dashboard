@@ -1,5 +1,12 @@
 /* Shared dashboard state. Modules read and change it through this object. */
 
+function projectList() {
+  return {
+    filters: {status: 'all', query: '', category: 'all', group: 'all', showArchived: false},
+    sort: {key: 'activity', direction: 'desc'},
+  };
+}
+
 export const store = {
   // Last snapshot from /api/state, or null before the first answer.
   data: null,
@@ -10,7 +17,9 @@ export const store = {
     ddev: {query: '', status: 'all', sort: 'name', direction: 'asc'},
     containers: {query: '', status: 'all', scope: 'all', sort: 'name', direction: 'asc'},
   },
-  // Project list selection; see views/projects.js.
-  filters: { status: 'all', query: '', category: 'all', group: 'all', showArchived: false },
-  sort: { key: 'activity', direction: 'desc' },
+  // Overview and Projects keep independent selections, including session searches.
+  projectLists: {overview: projectList(), projects: projectList()},
+  get filters() { return this.projectLists[this.view === 'overview' ? 'overview' : 'projects'].filters; },
+  get sort() { return this.projectLists[this.view === 'overview' ? 'overview' : 'projects'].sort; },
+  set sort(value) { this.projectLists[this.view === 'overview' ? 'overview' : 'projects'].sort = value; },
 };

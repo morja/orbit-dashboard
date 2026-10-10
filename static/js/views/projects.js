@@ -327,8 +327,8 @@ function sortBy(key) {
 
 /** Filter shortcuts from the overview open the project list with that filter. */
 function showFilteredProjects(status) {
-  store.filters.status = status;
-  store.filters.showArchived = false;
+  store.projectLists.projects.filters.status = status;
+  store.projectLists.projects.filters.showArchived = false;
   saveListPreferences();
   location.hash = 'projects';
 }

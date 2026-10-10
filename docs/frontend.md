@@ -128,8 +128,8 @@ based on a container name. Container rows contain only display metadata, never
 commands, environment variables or arbitrary labels.
 
 List selections persist through `list-preferences.js` in browser localStorage under
-`orbit-list-preferences-v1`. Project filters and sorting share the overview/project
-list; DDEV and Docker keep independent selections. Search strings are excluded.
+`orbit-list-preferences-v1`. Overview and Projects keep independent filters and sorting. Legacy shared
+preferences initialize both views separately; DDEV and Docker keep independent selections. Search strings are excluded.
 `remember_list_preferences` defaults to true and is editable in Appearance. Disabling
 it clears saved selections but leaves the current session intact. Filter resets
 clear search and filters in their own list, preserving sorting. Storage errors or

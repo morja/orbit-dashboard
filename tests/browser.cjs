@@ -196,6 +196,32 @@ const shot = (name) => path.join(os.tmpdir(), `orbit-${name}.png`);
     assert.equal(await page.locator('#search').inputValue(), '');
     assert.equal(await page.locator('#result-bar').innerText(), '');
 
+    // Overview choices survive attention shortcuts, navigation, and a reload.
+    await page.locator('nav [data-view="overview"]').click();
+    await page.waitForFunction(() => document.body.dataset.view === 'overview');
+    await page.locator('#status-filters [data-filter="unpushed"]').click();
+    const overviewSort = await page.evaluate(async () => (await import('/js/store.js')).store.sort);
+    await page.locator('.metric-filter[data-filter="changes"]').first().click();
+    await page.waitForFunction(() => document.body.dataset.view === 'projects');
+    assert.equal(await changes.getAttribute('aria-pressed'), 'true');
+    await page.locator('a[href="#overview"]').first().click();
+    await page.waitForFunction(() => document.body.dataset.view === 'overview');
+    assert.equal(await page.locator('#status-filters [data-filter="unpushed"]').getAttribute('aria-pressed'), 'true');
+    assert.equal(await changes.getAttribute('aria-pressed'), 'false');
+    await page.reload();
+    await page.waitForSelector('#status-filters');
+    assert.equal(await page.locator('#status-filters [data-filter="unpushed"]').getAttribute('aria-pressed'), 'true');
+    assert.deepEqual(await page.evaluate(async () => (await import('/js/store.js')).store.sort), overviewSort);
+    await page.locator('a[href="#projects"]').first().click();
+    await page.waitForFunction(() => document.body.dataset.view === 'projects');
+    assert.equal(await changes.getAttribute('aria-pressed'), 'true');
+    await page.locator('.reset-filters').click();
+    await page.locator('a[href="#overview"]').first().click();
+    await page.waitForFunction(() => document.body.dataset.view === 'overview');
+    await page.locator('.reset-filters').click();
+    await page.locator('nav [data-view="projects"]').click();
+    await page.waitForFunction(() => document.body.dataset.view === 'projects');
+
     await page.locator('.name-button').first().click();
     await page.waitForSelector('#project-dialog[open]');
     await page.locator('.close-dialog').first().click();
@@ -432,6 +458,21 @@ const shot = (name) => path.join(os.tmpdir(), `orbit-${name}.png`);
     await page.locator('nav a[data-view="overview"]').click();
     await page.screenshot({ path: shot('mobile'), fullPage: true });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+    // Older installs migrate shared selections into independent view objects.
+    await page.evaluate(() => localStorage.setItem('orbit-list-preferences-v1', JSON.stringify({
+      filters: {status: 'changes', category: 'all', group: 'all', showArchived: false},
+      sort: {key: 'name', direction: 'asc'},
+    })));
+    await page.reload();
+    await page.waitForSelector('#status-filters');
+    assert.deepEqual(await page.evaluate(async () => {
+      const {store} = await import('/js/store.js');
+      const {overview, projects} = store.projectLists;
+      const restored = [overview.filters.status, projects.filters.status, {...overview.sort}, {...projects.sort}];
+      projects.filters.status = 'running';
+      projects.sort.direction = 'desc';
+      return [restored, overview.filters.status, overview.sort.direction];
+    }), [['changes', 'changes', {key: 'name', direction: 'asc'}, {key: 'name', direction: 'asc'}], 'changes', 'asc']);
     assert.deepEqual(errors.filter((message) => !message.includes('403')), []);
     console.log('Dashboard checks passed: sorting, filters, archive, action key, dialogs, Docker, server, storage, narrow layout.');
   } finally {

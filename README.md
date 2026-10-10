@@ -27,7 +27,8 @@ Python's standard library powers the backend; a small Swift app provides the nat
 - **An interface you can adjust.** Light, dark and system appearance, five palettes,
   compact or comfortable spacing, font size, contrast and zoom. A collapsible sidebar.
 
-Filters and sorting are remembered locally by default. Turn this off in Appearance.
+Filters and sorting are remembered locally by default, separately for Overview and Projects.
+Turn this off in Appearance.
 Search text is never saved; Reset filters clears the current view’s filters and keeps its sorting.
 
 English is the default; German is available in Settings. Your project names, paths,

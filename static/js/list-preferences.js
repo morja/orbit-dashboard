@@ -18,8 +18,12 @@ export function syncListPreferences(config) {
     try {
       const saved = JSON.parse(localStorage.getItem(storageKey));
       if (saved) {
-        restore(store.filters, saved.filters, {status: ['all', 'changes', 'unpushed', 'running', 'notes', 'paused', 'blocked'], category: null, group: null, showArchived: [true, false]});
-        restore(store.sort, saved.sort, {key: ['size', 'activity', 'name', 'next_step', 'git', 'ddev'], direction: ['asc', 'desc']});
+        // Seed both views from legacy shared preferences without sharing objects.
+        for (const view of ['overview', 'projects']) {
+          const selection = saved.projectLists?.[view] || saved;
+          restore(store.projectLists[view].filters, selection.filters, {status: ['all', 'changes', 'unpushed', 'running', 'notes', 'paused', 'blocked'], category: null, group: null, showArchived: [true, false]});
+          restore(store.projectLists[view].sort, selection.sort, {key: ['size', 'activity', 'name', 'next_step', 'git', 'ddev'], direction: ['asc', 'desc']});
+        }
         for (const kind of ['ddev', 'containers']) {
           restore(store.integrationLists[kind], saved[kind], {status: ['all', 'running', 'stopped', 'paused', 'unknown'], sort: kind === 'ddev' ? ['name', 'path', 'state'] : ['name', 'image', 'state', 'ports'], direction: ['asc', 'desc'], ...(kind === 'containers' ? {scope: ['all', 'outside', 'ddev']} : {})});
         }
@@ -37,9 +41,12 @@ export function saveListPreferences() {
       localStorage.removeItem(storageKey);
       return;
     }
-    const {query: projectQuery, ...filters} = store.filters;
+    const projectLists = Object.fromEntries(Object.entries(store.projectLists).map(([view, selection]) => {
+      const {query, ...filters} = selection.filters;
+      return [view, {filters, sort: selection.sort}];
+    }));
     const {query: ddevQuery, ...ddev} = store.integrationLists.ddev;
     const {query: containerQuery, ...containers} = store.integrationLists.containers;
-    localStorage.setItem(storageKey, JSON.stringify({filters, sort: store.sort, ddev, containers}));
+    localStorage.setItem(storageKey, JSON.stringify({projectLists, ddev, containers}));
   } catch { /* List interactions still work when browser storage is unavailable. */ }
 }
