@@ -24,6 +24,7 @@ export function syncListPreferences(config) {
           restore(store.projectLists[view].filters, selection.filters, {status: ['all', 'changes', 'unpushed', 'running', 'notes', 'paused', 'blocked'], category: null, group: null, showArchived: [true, false]});
           restore(store.projectLists[view].sort, selection.sort, {key: ['size', 'activity', 'name', 'next_step', 'git', 'ddev'], direction: ['asc', 'desc']});
         }
+        restore(store.servicesSelection, saved.services, {origin: ['all', 'apple', 'third_party', 'own'], scope: ['all', 'user', 'system'], kind: ['all', 'launchd', 'cron'], status: ['all', 'running', 'waiting', 'failed', 'disabled', 'not_loaded', 'unknown', 'scheduled'], favorites: [true, false]});
         for (const kind of ['ddev', 'containers']) {
           restore(store.integrationLists[kind], saved[kind], {status: ['all', 'running', 'stopped', 'paused', 'unknown'], sort: kind === 'ddev' ? ['name', 'path', 'state'] : ['name', 'image', 'state', 'ports'], direction: ['asc', 'desc'], ...(kind === 'containers' ? {scope: ['all', 'outside', 'ddev']} : {})});
         }
@@ -47,6 +48,7 @@ export function saveListPreferences() {
     }));
     const {query: ddevQuery, ...ddev} = store.integrationLists.ddev;
     const {query: containerQuery, ...containers} = store.integrationLists.containers;
-    localStorage.setItem(storageKey, JSON.stringify({projectLists, ddev, containers}));
+    const {query: servicesQuery, ...services} = store.servicesSelection;
+    localStorage.setItem(storageKey, JSON.stringify({projectLists, ddev, containers, services}));
   } catch { /* List interactions still work when browser storage is unavailable. */ }
 }

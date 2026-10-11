@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
+import local_services
 import argparse
 import copy
 import hashlib
@@ -37,12 +38,12 @@ def stamp():
     return datetime.now(timezone.utc).isoformat()
 
 
-def command(args, timeout=8, input=None):
+def command(args, timeout=8, input=None, error_output=False):
     # Argument arrays and disabled Git index writes keep scans read-only.
     env = dict(os.environ, GIT_OPTIONAL_LOCKS="0", LC_ALL="C", GIT_TERMINAL_PROMPT="0")
     try:
         result = subprocess.run(args, capture_output=True, text=True, errors="replace", timeout=timeout, env=env, input=input)
-        return result.stdout, result.returncode
+        return result.stdout + (result.stderr if error_output and result.returncode else ""), result.returncode
     except (OSError, subprocess.TimeoutExpired):
         return "", None
 
@@ -390,6 +391,7 @@ class Dashboard:
         self.servers = {self.server_key(item): store.cached(self.server_key(item)) for item in self.config['servers']}
         self.ddev = {"projects": [], "checked_at": None, "error": None}
         self.docker = {"checked_at": None, "status": "unknown", "colima_status": "unknown", "errors": [], "usage": []}
+        self.services = {"items": [], "notices": [], "checked_at": None}
         self.sizes = {}
         with store.connect() as db:
             self.sizes = {r[0]: {"bytes": r[1], "checked_at": datetime.fromtimestamp(r[2], timezone.utc).isoformat()} for r in db.execute("SELECT * FROM sizes")}
@@ -458,8 +460,8 @@ class Dashboard:
         return copy.deepcopy(self.config)
 
     def refresh(self, force=False):
-        for name in ["mac", "projects", "moon", "ddev", "docker", "sizes"]:
-            if name in ("moon", "ddev", "docker") and not self.config[name + "_enabled"]:
+        for name in ["mac", "projects", "moon", "ddev", "docker", "sizes", "services"]:
+            if name in ("moon", "ddev", "docker", "services") and not self.config[name + "_enabled"]:
                 continue
             self.schedule(name, getattr(self, "collect_" + name), force)
 
@@ -467,6 +469,19 @@ class Dashboard:
         while not self.stop.is_set():
             self.refresh()
             self.stop.wait(5)
+
+    def collect_services(self):
+        config = self.config
+        if not config['services_enabled']:
+            return
+
+        def read(args, timeout=8):
+            return command(args, timeout=timeout, error_output=True)
+
+        value = {**local_services.collect(read), 'checked_at': stamp()}
+        with self.lock:
+            if self.config is config:
+                self.services = value
 
     def collect_mac(self):
         disk = shutil.disk_usage(str(Path.home()))
@@ -718,7 +733,7 @@ class Dashboard:
                     url = match.get("primary_url") or match.get("httpurl")
                     if isinstance(url, str) and urlparse(url).scheme in ("http", "https"):
                         project["ddev"]["url"] = url
-            return {"servers": [{**item, "status": copy.deepcopy(self.servers.get(self.server_key(item)))} for item in self.config['servers'] if item['enabled']], "app": "Orbit", "mac": copy.deepcopy(self.mac), "moon": copy.deepcopy(self.moon) if self.config["moon_enabled"] else None, "projects": projects, "docker": copy.deepcopy(self.docker) if self.config["docker_enabled"] else {"status": "disabled", "errors": [], "usage": []}, "ddev": {"checked_at": ddev["checked_at"], "error": ddev["error"], "running": None if ddev["error"] or not ddev["checked_at"] else sum(str(p.get("status", "")).lower() == "running" for p in ddev["projects"]), "projects": [{"name": p.get("name", ""), "path": p.get("approot", p.get("root", "")), "status": "unknown" if ddev["error"] else str(p.get("status", "unknown")).lower()} for p in ddev["projects"]]}, "checking": sorted(self.active), "errors": dict(self.errors), "project_errors": getattr(self, "project_errors", []), "projects_checked_at": getattr(self, "projects_checked", None), "started_at": self.started_at, "progress": copy.deepcopy(self.progress), "roots": [source["path"] for source in self.config["sources"]], "config": copy.deepcopy(self.config), "server_time": stamp()}
+            return {"services": copy.deepcopy(self.services) if self.config["services_enabled"] else {"items": [], "notices": [], "checked_at": None}, "servers": [{**item, "status": copy.deepcopy(self.servers.get(self.server_key(item)))} for item in self.config['servers'] if item['enabled']], "app": "Orbit", "mac": copy.deepcopy(self.mac), "moon": copy.deepcopy(self.moon) if self.config["moon_enabled"] else None, "projects": projects, "docker": copy.deepcopy(self.docker) if self.config["docker_enabled"] else {"status": "disabled", "errors": [], "usage": []}, "ddev": {"checked_at": ddev["checked_at"], "error": ddev["error"], "running": None if ddev["error"] or not ddev["checked_at"] else sum(str(p.get("status", "")).lower() == "running" for p in ddev["projects"]), "projects": [{"name": p.get("name", ""), "path": p.get("approot", p.get("root", "")), "status": "unknown" if ddev["error"] else str(p.get("status", "unknown")).lower()} for p in ddev["projects"]]}, "checking": sorted(self.active), "errors": dict(self.errors), "project_errors": getattr(self, "project_errors", []), "projects_checked_at": getattr(self, "projects_checked", None), "started_at": self.started_at, "progress": copy.deepcopy(self.progress), "roots": [source["path"] for source in self.config["sources"]], "config": copy.deepcopy(self.config), "server_time": stamp()}
 
 
 STATIC = APP / "static"
@@ -806,6 +821,16 @@ class Handler(BaseHTTPRequestHandler):
             dashboard = self.server.dashboard
             if path == "/api/settings":
                 return self.send(dashboard.update_config(data))
+            match_service = re.fullmatch(r"/api/services/([a-f0-9]{20})", path)
+            if match_service:
+                with dashboard.lock:
+                    if not any(item['id'] == match_service[1] for item in dashboard.services['items']):
+                        return self.send({'error': 'Service not found'}, 404)
+                    config = copy.deepcopy(dashboard.config)
+                    config['service_preferences'][match_service[1]] = data
+                    # Saving a description changes no service or collection schedule.
+                    dashboard.config = dashboard.settings.save(config)
+                    return self.send(copy.deepcopy(dashboard.config))
             if path == "/api/refresh":
                 with dashboard.lock:
                     if time.time() - getattr(dashboard, "manual_refresh", 0) < 5:

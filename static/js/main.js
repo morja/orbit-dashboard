@@ -10,6 +10,7 @@ import { startRefreshing } from './refresh.js';
 import { navigate, render } from './render.js';
 import { bindSettings } from './settings.js';
 import { bindServerSummaries } from './views/server.js';
+import { bindServicesEvents } from './views/services.js';
 import { bindDockerEvents } from './views/docker.js';
 import { bindProjectEvents } from './views/projects.js';
 
@@ -28,6 +29,7 @@ setInterval(updateClock, 60000);
 bindPathLayout();
 bindProjectEvents();
 bindDockerEvents(render);
+bindServicesEvents(render);
 bindProjectActions();
 bindSettings();
 bindServerSummaries();

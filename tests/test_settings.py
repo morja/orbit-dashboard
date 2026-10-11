@@ -224,6 +224,34 @@ class SettingsAPITest(unittest.TestCase):
         self.assertEqual(raised.exception.code, 400)
         self.assertFalse(self.settings.path.exists())
 
+    def test_service_annotations_require_auth_and_persist_without_commands(self):
+        key = 'a' * 20
+        self.dashboard.services['items'] = [{'id': key}]
+        annotation = {'own': True, 'favorite': True, 'description': 'My backup'}
+
+        def save(value, action_key, origin=None, service_id=key):
+            headers = {'Content-Type': 'application/json', 'X-Orbit-Key': action_key}
+            if origin:
+                headers['Origin'] = origin
+            request = urllib.request.Request(self.url + '/api/services/' + service_id,
+                                             data=json.dumps(value).encode(), headers=headers)
+            return urllib.request.urlopen(request)
+
+        for value, action_key, origin, service_id, code in [
+            (annotation, '', None, key, 403),
+            (annotation, self.dashboard.action_key, 'https://foreign.example', key, 403),
+            ({'own': 'yes'}, self.dashboard.action_key, None, key, 400),
+            (annotation, self.dashboard.action_key, None, 'b' * 20, 404),
+        ]:
+            with self.assertRaises(urllib.error.HTTPError) as raised:
+                save(value, action_key, origin, service_id)
+            self.assertEqual(raised.exception.code, code)
+            raised.exception.close()
+        with patch('server.command') as command, save(annotation, self.dashboard.action_key) as response:
+            self.assertEqual(json.load(response)['service_preferences'][key], annotation)
+        command.assert_not_called()
+        self.assertEqual(Settings(self.settings.path).value['service_preferences'][key], annotation)
+
     def test_disabled_collectors_do_not_run_or_show_cached_values(self):
         self.dashboard.moon = {'checked_at': 'old', 'warnings': ['old server']}
         with patch.object(self.dashboard, 'schedule') as schedule:
@@ -231,10 +259,12 @@ class SettingsAPITest(unittest.TestCase):
         self.assertEqual([call.args[0] for call in schedule.call_args_list], ['mac', 'projects', 'sizes'])
         self.assertIsNone(self.dashboard.snapshot()['moon'])
         self.assertEqual(self.dashboard.snapshot()['docker']['status'], 'disabled')
+        self.assertEqual(self.dashboard.snapshot()['services']['items'], [])
         with patch('server.command') as run:
             self.dashboard.collect_moon()
             self.dashboard.collect_ddev()
             self.dashboard.collect_docker()
+            self.dashboard.collect_services()
         run.assert_not_called()
 
     def test_inflight_server_result_cannot_replace_new_configuration(self):

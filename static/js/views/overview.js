@@ -1,4 +1,5 @@
 /* Overview: summary tiles, what needs attention, server summaries and recent projects. */
+import { servicesSummary } from './services.js';
 import { ago, bytes, bytesParts, formatNumber } from '../format.js';
 import { escape, markup } from '../html.js';
 import { t, tHtml } from '../i18n.js';
@@ -197,7 +198,7 @@ export function overviewView() {
     ${metrics()}
     <div class="overview-workspace">
       ${projectSection()}
-      <aside class="overview-rail" aria-label="${escape(t('Workspace health'))}">${attention()}${summaries}</aside>
+      <aside class="overview-rail" aria-label="${escape(t('Workspace health'))}">${attention()}${servicesSummary()}${summaries}</aside>
     </div>
   `;
 }

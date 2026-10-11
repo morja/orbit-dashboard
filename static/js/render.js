@@ -7,6 +7,7 @@ import { applyAppearance } from './settings.js';
 import { fitProjectPaths } from './paths.js';
 import { store } from './store.js';
 import { syncListPreferences } from './list-preferences.js';
+import { servicesView } from './views/services.js';
 import { dockerView } from './views/docker.js';
 import { overviewView } from './views/overview.js';
 import { projectSection } from './views/projects.js';
@@ -14,6 +15,7 @@ import { serverView } from './views/server.js';
 import { storageView } from './views/storage.js';
 
 const views = {
+  services: servicesView,
   overview: overviewView,
   projects: projectSection,
   moon: serverView,
@@ -22,7 +24,7 @@ const views = {
 };
 
 function viewName(view) {
-  return { overview: t('Overview'), projects: t('Projects'), moon: t('Servers'), docker: 'Docker & DDEV', storage: t('Storage') }[view];
+  return { services: t('Local services'), overview: t('Overview'), projects: t('Projects'), moon: t('Servers'), docker: 'Docker & DDEV', storage: t('Storage') }[view];
 }
 
 // Every view uses the same compact header and keeps the live status beside Refresh.
@@ -61,7 +63,7 @@ export function render() {
   const focus = document.activeElement;
   // Redrawing would close an open select in the content.
   if (focus?.tagName === 'SELECT' && content.contains(focus)) return;
-  const searchId = focus?.id === 'search' || focus?.dataset?.listQuery ? focus.id : null;
+  const searchId = focus?.id === 'search' || focus?.dataset?.listQuery || focus?.id === 'services-search' ? focus.id : null;
   const searchSelection = searchId ? [focus.selectionStart, focus.selectionEnd] : null;
 
   renderHeading(store.view);

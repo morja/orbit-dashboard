@@ -30,6 +30,85 @@ const shot = (name) => path.join(os.tmpdir(), `orbit-${name}.png`);
 
     await page.goto(ready.url + '/#key=' + ready.key);
     await page.waitForSelector('#project-table tbody tr');
+    // Service annotations persist on the backend; filters separate origin and scope.
+    await page.locator('nav [data-view="services"]').click();
+    const serviceRows = page.locator('[data-service-id]');
+    await page.waitForSelector('[data-service-id]');
+    assert.equal(await serviceRows.count(), 4);
+    assert(await serviceRows.locator('td:nth-child(3)').evaluateAll(cells => cells.every(cell => [...cell.childNodes].every(node => node.nodeType !== Node.TEXT_NODE || node.textContent.trim() !== '0'))), 'A missing PID must not render a stray zero');
+    assert(await page.locator('.service-program > div').evaluateAll(items => items.every(node => node.scrollWidth <= node.clientWidth + 1)), 'Long program paths must not overflow into the Details column');
+    assert(await serviceRows.evaluateAll(rows => rows.every(row => [...row.cells].every(cell => {
+      const bounds = cell.getBoundingClientRect();
+      return [...cell.children].every(child => child.getBoundingClientRect().right <= bounds.right + 1);
+    }))), 'Service content must remain inside its own table cell');
+    await page.locator('[data-service-filter="origin"]').selectOption('own');
+    assert.equal(await serviceRows.count(), 1, 'My services must include automatically detected custom services');
+    await page.locator('[data-service-filter="status"]').selectOption('running');
+    assert.equal(await serviceRows.count(), 0);
+    await page.locator('#services-show-own').click();
+    assert.equal(await serviceRows.count(), 1);
+    assert.equal(await page.locator('[data-service-filter="origin"]').inputValue(), 'own');
+    assert.equal(await page.locator('[data-service-filter="status"]').inputValue(), 'all');
+    await page.locator('#services-reset').click();
+    assert.equal(await serviceRows.filter({hasText: 'broken-worker'}).locator('.badge.red').count(), 1);
+    await page.locator('[data-service-filter="scope"]').selectOption('system');
+    assert.equal(await serviceRows.count(), 2);
+    await page.locator('[data-service-filter="origin"]').selectOption('apple');
+    assert.equal(await serviceRows.count(), 1);
+    await page.locator('#services-reset').click();
+    const backup = serviceRows.filter({hasText: 'custom-backup'});
+    await backup.locator('[data-service-edit]').click();
+    assert.match(await page.locator('#service-facts').innerText(), /VeryLongFrameworkName/);
+    assert(await page.locator('#service-form').evaluate(form => parseFloat(getComputedStyle(form).rowGap) <= 10), 'Service details must use compact section spacing');
+    assert(await page.locator('#service-form label').evaluateAll(labels => labels.every(label => parseFloat(getComputedStyle(label).marginTop) <= 4)), 'Service labels must not add large margins');
+    await page.screenshot({path: shot('service-details-compact')});
+    assert.equal(await page.locator('#service-own').isChecked(), true);
+    await page.locator('#service-own').uncheck();
+    await page.locator('#service-save').click();
+    await page.waitForFunction(() => !document.getElementById('service-dialog').open);
+    await page.locator('[data-service-filter="origin"]').selectOption('own');
+    assert.equal(await serviceRows.count(), 0, 'Manual exclusion must override automatic ownership');
+    assert.match(await page.locator('#content').innerText(), /Reset the other filters/);
+    await page.locator('#services-reset').click();
+    await backup.locator('[data-service-edit]').click();
+    assert.equal(await backup.locator('.service-name strong').innerText(), 'backup.sh');
+    await page.locator('#service-description').fill('My backup <script>literal</script>');
+    await page.locator('#service-own').check();
+    await page.locator('#service-favorite').check();
+    await page.locator('#service-save').click();
+    await page.waitForFunction(() => !document.getElementById('service-dialog').open);
+    await page.reload();
+    await page.waitForSelector('[data-service-id]');
+    assert.match(await backup.innerText(), /My backup <script>literal<\/script>/);
+    assert.equal(await backup.locator('script').count(), 0);
+    await page.locator('[data-service-filter="origin"]').selectOption('own');
+    assert.equal(await serviceRows.count(), 1);
+    await page.reload();
+    await page.waitForSelector('[data-service-id]');
+    assert.equal(await serviceRows.count(), 1);
+    assert.equal(await page.locator('[data-service-filter="origin"]').inputValue(), 'own');
+    await page.locator('#services-reset').click();
+    for (const language of ['en', 'de']) {
+      for (const theme of ['light', 'dark']) {
+        await page.evaluate(async ({language, theme}) => {
+          Object.assign((await import('/js/store.js')).store.data.config, {language, theme});
+          (await import('/js/render.js')).render();
+        }, {language, theme});
+        assert.match(await backup.innerText(), language === 'en' ? /Waiting for next start/ : /Wartet auf nächsten Start/);
+        assert(await serviceRows.evaluateAll(rows => rows.every(row => [...row.cells].every(cell => cell.scrollWidth <= cell.clientWidth + 1))), 'Service cells must not overflow at desktop width');
+        await page.screenshot({path: shot('services-desktop-' + language + '-' + theme), fullPage: true});
+        await page.setViewportSize({width: 390, height: 844});
+        assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+        await page.screenshot({path: shot('services-' + language + '-' + theme), fullPage: true});
+        await page.setViewportSize({width: 1440, height: 1100});
+      }
+    }
+    await page.locator('nav [data-view="overview"]').click();
+    assert.match(await page.locator('.service-summary').innerText(), /My backup/);
+    await page.evaluate(async () => {
+      Object.assign((await import('/js/store.js')).store.data.config, {language: 'en', theme: 'light'});
+      (await import('/js/render.js')).render();
+    });
     // Remote states stay distinguishable in both languages and appearances.
     for (const language of ['en', 'de']) {
       for (const theme of ['light', 'dark']) {

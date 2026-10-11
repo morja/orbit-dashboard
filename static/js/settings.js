@@ -14,7 +14,7 @@ import { notify } from './toast.js';
 
 const dialog = document.getElementById('settings-dialog');
 const field = (key) => document.getElementById('setting-' + key);
-const intervalLabels = { mac: 'Mac storage', projects: 'Projects and Git', moon: 'Server', ddev: 'DDEV', docker: 'Docker / Colima', sizes: 'Folder sizes' };
+const intervalLabels = { mac: 'Mac storage', projects: 'Projects and Git', moon: 'Server', ddev: 'DDEV', docker: 'Docker / Colima', sizes: 'Folder sizes', services: 'Local services' };
 
 let draft;
 let detected;
@@ -31,6 +31,7 @@ export function applyAppearance(config) {
   const serverLink = document.querySelector('nav [data-view="moon"]');
   serverLink.hidden = !config.moon_enabled;
   document.getElementById('server-nav-label').textContent = t('Servers');
+  document.querySelector('nav [data-view="services"]').hidden = !config.services_enabled;
   document.querySelector('nav [data-view="docker"]').hidden = !config.docker_enabled && !config.ddev_enabled;
 }
 
@@ -244,7 +245,7 @@ export async function openSettings(section = 'appearance') {
       }
       select.value = value;
     }
-    for (const key of ['ddev_enabled', 'docker_enabled', 'remember_list_preferences', 'show_next_step', 'show_storage', 'show_last_changed', 'show_ddev']) field(key).checked = draft[key];
+    for (const key of ['services_enabled', 'ddev_enabled', 'docker_enabled', 'remember_list_preferences', 'show_next_step', 'show_storage', 'show_last_changed', 'show_ddev']) field(key).checked = draft[key];
     field('excluded_dirs').value = draft.excluded_dirs.join('\n');
     field('category_order').value = (draft.category_order || []).join('\n');
     document.getElementById('settings-intervals').innerHTML = intervalFields(draft);
@@ -273,7 +274,7 @@ function collectSettings() {
     return server;
   });
   for (const key of ['terminal', 'editor', 'theme', 'palette', 'language', 'density']) config[key] = field(key).value;
-  for (const key of ['ddev_enabled', 'docker_enabled', 'remember_list_preferences', 'show_next_step', 'show_storage', 'show_last_changed', 'show_ddev']) config[key] = field(key).checked;
+  for (const key of ['services_enabled', 'ddev_enabled', 'docker_enabled', 'remember_list_preferences', 'show_next_step', 'show_storage', 'show_last_changed', 'show_ddev']) config[key] = field(key).checked;
   // The single legacy server fields are replaced by the server list.
   Object.assign(config, { moon_enabled: false, moon_host: '', moon_command: 'moon-status', moon_label: 'Server' });
   for (const key of ['font_size', 'contrast', 'zoom']) config[key] = Number(field(key).value);

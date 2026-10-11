@@ -138,3 +138,13 @@ invalid saved values fall back to defaults without blocking the dashboard.
 The native WebKit window uses a persistent website data store so these local choices
 also survive quitting the Mac app. Settings and notes continue to live in `data/`.
 Native regression checks verify browser storage across separate app processes.
+
+Local Services keeps filters in `store.servicesSelection` and remembers them through
+`list-preferences.js`, excluding search text. Personal descriptions, own-service marks
+and favorites live in validated `service_preferences` settings. The service dialog
+saves through the authenticated `/api/services/<id>` endpoint.
+
+Service tables override the shared nowrap rule and use fixed column layout so
+identifiers and program names cannot overlap actions. Full paths appear only in
+the wrapping Details facts. My services uses collector ownership hints unless a
+persisted own-service boolean overrides them; scope remains a separate filter.

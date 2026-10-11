@@ -81,7 +81,7 @@ def main():
             {'path': str(work / 'Projects'), 'category': 'Own projects', 'group': '', 'archived': False},
             {'path': str(work / 'Clients'), 'category': 'Clients', 'group': '', 'archived': False},
             {'path': str(work / 'Archive'), 'category': 'Archive', 'group': '', 'archived': True},
-        ], ddev_enabled=True, docker_enabled=True, moon_enabled=True, moon_host='example', moon_label='Moon', terminal='Terminal')
+        ], services_enabled=True, ddev_enabled=True, docker_enabled=True, moon_enabled=True, moon_host='example', moon_label='Moon', terminal='Terminal')
         settings = Settings(Path(tmp) / 'data/settings.json')
         settings.save(config)
         store = server.Store(Path(tmp) / 'data')
@@ -97,6 +97,22 @@ def main():
         dashboard.collect_docker()
         dashboard.moon = {**server.parse_moon(MOON), 'checked_at': server.stamp()}
         dashboard.servers[dashboard.server_key(dashboard.config['servers'][0])] = dashboard.moon
+        dashboard.services = {'checked_at': server.stamp(), 'notices': [], 'items': [
+            {'id': f'{index:020x}', 'name': name, 'kind': kind, 'scope': scope, 'origin': origin,
+             'path': '/Library/LaunchDaemons/' + name + '.plist',
+             'program': '/System/Library/PrivateFrameworks/' + ('VeryLongFrameworkName' * 12) + '.framework/Versions/A/Resources/' + name,
+             'is_own': name == 'custom-backup',
+             'display_name': 'backup.sh' if name == 'custom-backup' else name,
+             'script': '/Users/example/Work/scripts/backup.sh' if name == 'custom-backup' else '',
+             'schedule': 'On demand' if kind == 'launchd' else '0 3 * * *', 'status': status,
+             'exit_code': 7 if status == 'failed' else 0, 'pid': 123 if status == 'running' else 0}
+            for index, (name, kind, scope, origin, status) in enumerate([
+                ('custom-backup', 'launchd', 'user', 'third_party', 'waiting'),
+                ('com.apple.fixture', 'launchd', 'system', 'apple', 'running'),
+                ('broken-worker', 'launchd', 'system', 'third_party', 'failed'),
+                ('nightly-cleanup', 'cron', 'user', 'third_party', 'scheduled'),
+            ], 1)
+        ]}
         # Values stay fixed during the browser run.
         dashboard.refresh = lambda force=False: None
 

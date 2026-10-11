@@ -19,6 +19,9 @@ Python's standard library powers the backend; a small Swift app provides the nat
 - **Docker and DDEV, when you use them.** Filter and sort registered DDEV projects.
   List Docker containers independently, including databases outside DDEV. Keep the
   storage breakdown beside them.
+- **Local background services.** Opt in under Tools to list launchd definitions and
+  accessible cron jobs. Filter by origin, user/system scope and status; mark your own
+  services, add descriptions and pin favorites to Overview. Service checks change no jobs.
 - **Storage.** Mac disk space, local project sizes and storage history. Colima figures
   distinguish VM capacity from space occupied on your Mac.
 - **Optional servers.** Multiple SSH connections with separate overview visibility.

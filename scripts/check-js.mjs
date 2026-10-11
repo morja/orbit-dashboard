@@ -43,7 +43,7 @@ for (const file of modules.filter((name) => !name.includes('locales'))) {
 }
 
 // Static page text, and messages that the Python backend sends to the page.
-for (const file of ['static/index.html', 'server.py', 'orbit_config.py', 'remote_probe.py']) sources.push(readFileSync(join(root, file), 'utf8'));
+for (const file of ['static/index.html', 'server.py', 'orbit_config.py', 'remote_probe.py', 'local_services.py']) sources.push(readFileSync(join(root, file), 'utf8'));
 const allSources = sources.join('\n');
 const unused = Object.keys(german).filter((key) => !key.includes('{') && !allSources.includes(key) && !allSources.includes(key.replace(/'/g, "\\'")));
 

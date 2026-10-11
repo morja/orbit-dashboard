@@ -21,6 +21,7 @@
       <a href="#projects" data-view="projects" aria-label="Projects"><span data-icon="folder"></span>Projects<span id="nav-count" class="nav-count">…</span></a>
       <a href="#servers" data-view="moon" aria-label="Servers"><span data-icon="server"></span><span id="server-nav-label">Servers</span></a>
       <a href="#docker" data-view="docker" aria-label="Docker & DDEV"><span data-icon="server"></span>Docker &amp; DDEV</a>
+      <a href="#services" data-view="services" aria-label="Local services"><span data-icon="activity"></span>Local services</a>
       <a href="#storage" data-view="storage" aria-label="Storage"><span data-icon="disk"></span>Storage</a>
     </nav>
     <div class="sidebar-note"><div class="mini-orbit"></div><p>Everything in one place.</p><span>Your Mac. Your projects.<br>Your next step.</span></div>
@@ -168,6 +169,7 @@
         <div class="settings-panel" id="settings-panel-tools" role="tabpanel" aria-labelledby="settings-tab-tools" tabindex="0" hidden>
           <section class="settings-section">
             <h3>Tools</h3>
+            <label class="settings-toggle"><input type="checkbox" id="setting-services_enabled">Check local background services</label>
             <label class="settings-toggle"><input type="checkbox" id="setting-ddev_enabled">Check DDEV projects</label>
             <label class="settings-toggle"><input type="checkbox" id="setting-docker_enabled">Check Docker and Colima</label>
             <div class="form-row">
@@ -212,5 +214,17 @@
   </dialog>
 
   <div id="toast" role="status" hidden></div>
+  <dialog id="service-dialog" aria-labelledby="service-dialog-title">
+    <form id="service-form">
+      <h2 id="service-dialog-title">Service details</h2><p id="service-label"></p>
+      <div id="service-facts"></div>
+      <label>Description<input id="service-description" maxlength="500"></label>
+      <label><input type="checkbox" id="service-own">Mark as my service</label>
+      <p class="muted" id="service-ownership-hint"></p>
+      <label><input type="checkbox" id="service-favorite">Favorite</label>
+      <p class="muted">These labels are stored in Orbit. The service configuration stays unchanged.</p>
+      <div class="dialog-actions"><button type="button" class="button secondary" id="service-cancel">Cancel</button><button class="button" id="service-save">Save</button></div>
+    </form>
+  </dialog>
 </body>
 </html>

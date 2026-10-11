@@ -77,6 +77,11 @@ const assert = require('node:assert/strict');
           await selectTab('appearance');
           await page.locator('#setting-language').selectOption(language);
           await page.locator('#setting-theme').selectOption(theme);
+          await page.evaluate(async language => (await import('/js/i18n.js')).setLanguage(language), language);
+          await selectTab('tools');
+          assert.equal(await page.locator('#setting-services_enabled').isChecked(), false);
+          assert.match(await page.locator('#setting-services_enabled').locator('..').innerText(), language === 'en' ? /Check local background services/ : /Lokale Hintergrunddienste prüfen/);
+          assert(await page.locator('#setting-services_enabled').isVisible());
           await selectTab('projects');
           await page.evaluate(async ({folder, language}) => {
             (await import('/js/i18n.js')).setLanguage(language);

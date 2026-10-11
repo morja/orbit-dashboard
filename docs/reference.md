@@ -360,3 +360,36 @@ Orbit app while testing a clean source export. The native checks accept the same
 bundle via `python3 tests/native.py --app /path/to/Orbit-preview.app`. The source
 folder and Python interpreter are still referenced by the bundle. Close other
 Orbit instances before testing because native instances share port 8765.
+
+## Local background services
+
+Enable **Check local background services** in Settings → Tools. Checks run every
+120 seconds by default; change the interval under Advanced. Orbit reads plist
+definitions in the standard user, third-party and Apple LaunchAgents/LaunchDaemons
+directories, plus `launchctl print` and `print-disabled` for the current GUI user
+and system domains. Global agents are shown in the current user's context. User
+definitions shadow global agents with the same label. Services without a plist in
+these directories, other users' sessions and bundled app helpers are outside this view.
+
+A loaded job with a PID is running. A loaded idle job with a nonzero last exit code
+is marked as a failed last run; otherwise it is waiting. Definitions absent from
+a readable runtime list are not loaded. Explicit runtime overrides identify disabled
+jobs; unavailable runtime data stays unknown. A successful exit code describes the
+last reported process result, not application health. No last-run timestamp is inferred.
+
+Cron rows come from the current user's `crontab -l` and readable `/etc/crontab`.
+Other users' and root crontabs are not queried. Scheduled means a definition exists;
+execution results, daemon health and run times are unknown. Only the first command
+token is displayed. Launchd arguments and environment values are omitted.
+
+Origin and execution scope are separate filters. Apple origin follows the system
+definition directory. My services includes the current user's cron entries and
+launchd programs or scripts located in the user's home folder outside application
+bundles and managed directories such as Library, Applications and package data.
+This is a path-based inference, not proof of authorship. Merely running as the user
+does not qualify a service. Manual own-service choices override detection in either
+direction. Under Details, change that classification, add a description and select Favorite. Favorites
+appear on Overview. The table shows readable application/script/executable names and
+short program names; full program, script and configuration paths stay in Details
+and remain searchable. These annotations stay in local settings and never alter job
+definitions. Checks use no sudo and never load, unload, start or stop services.

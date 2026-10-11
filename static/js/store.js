@@ -11,6 +11,7 @@ export const store = {
   // Last snapshot from /api/state, or null before the first answer.
   data: null,
   view: 'overview',
+  servicesSelection: {query: '', origin: 'all', scope: 'all', status: 'all', kind: 'all', favorites: false},
   expandedServices: new Set(),
   selectedServer: null,
   integrationLists: {

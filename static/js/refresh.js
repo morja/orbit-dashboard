@@ -12,7 +12,7 @@ import { store } from './store.js';
 import { notify } from './toast.js';
 
 // Checks shown in the top bar. Folder sizes run long and have their own note below the table.
-const visibleChecks = ['projects', 'moon', 'ddev', 'docker'];
+const visibleChecks = ['projects', 'moon', 'ddev', 'docker', 'services'];
 
 let stateTag = null;
 let lastRender = 0;
@@ -45,7 +45,7 @@ function activityText(running) {
     return progress?.total ? t('Checking projects · {done} of {total}', progress) : t('Finding projects');
   }
   if (running[0] === 'moon') return t('Checking servers');
-  const names = { ddev: 'DDEV', docker: 'Docker' };
+  const names = { ddev: 'DDEV', docker: 'Docker', services: t('Local services') };
   if (running.length) return t('{name} is being checked', { name: names[running[0]] });
   return t('Up to date · {time}', { time: formatTime() });
 }
