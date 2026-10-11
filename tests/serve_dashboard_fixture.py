@@ -1,3 +1,4 @@
+import time
 """Serve a synthetic workspace for the dashboard browser checks, without real collectors or SSH."""
 from collections import namedtuple
 from pathlib import Path
@@ -73,6 +74,9 @@ def main():
         usage = namedtuple('Usage', 'total used free')
         server.shutil.disk_usage = lambda path: usage(500 * 1024 ** 3, 320 * 1024 ** 3, 180 * 1024 ** 3)
         server.socket.gethostname = lambda: 'example-mac.local'
+        server.recent_commits = lambda path: [{
+            "id": f"{i + 1:07x}", "subject": "Synthetic commit <script> & " + "long subject " * 12,
+            "timestamp": int(time.time()) - i * 3600} for i in range(10)]
         server.git_status = git_status
         server.latest_change = lambda path, last_commit=None: last_commit
 

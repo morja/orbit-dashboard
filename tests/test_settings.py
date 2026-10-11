@@ -224,6 +224,30 @@ class SettingsAPITest(unittest.TestCase):
         self.assertEqual(raised.exception.code, 400)
         self.assertFalse(self.settings.path.exists())
 
+    def test_commit_history_only_reads_known_projects_and_rejects_foreign_origins(self):
+        key = 'a' * 20
+        self.dashboard.projects = [{'id': key, 'path': self.tmp.name}]
+        url = self.url + '/api/projects/' + key + '/commits'
+        commits = [{'id': 'abcdef0', 'subject': 'Synthetic commit', 'timestamp': 1}]
+        with patch('server.recent_commits', return_value=commits) as read:
+            with urllib.request.urlopen(url) as response:
+                self.assertEqual(json.load(response)['commits'], commits)
+            read.assert_called_once_with(self.tmp.name)
+            for target, headers, code in [
+                (self.url + '/api/projects/' + 'b' * 20 + '/commits', {}, 404),
+                (url, {'Origin': 'https://foreign.example'}, 403),
+            ]:
+                with self.assertRaises(urllib.error.HTTPError) as raised:
+                    urllib.request.urlopen(urllib.request.Request(target, headers=headers))
+                self.assertEqual(raised.exception.code, code)
+                raised.exception.close()
+            self.assertEqual(read.call_count, 1)
+        with patch('server.recent_commits', side_effect=ValueError('Commit history unavailable')):
+            with self.assertRaises(urllib.error.HTTPError) as raised:
+                urllib.request.urlopen(url)
+            self.assertEqual(raised.exception.code, 503)
+            raised.exception.close()
+
     def test_service_annotations_require_auth_and_persist_without_commands(self):
         key = 'a' * 20
         self.dashboard.services['items'] = [{'id': key}]

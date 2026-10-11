@@ -1,3 +1,4 @@
+import { icon } from '../icons.js';
 /* Local background services. Personal annotations never change launchd or cron. */
 import { api } from '../api.js';
 import { ago } from '../format.js';
@@ -79,8 +80,12 @@ export function servicesSummary() {
   if (!store.data.config.services_enabled) return '';
   const rows = (store.data.services?.items || []).filter(row => preference(row).favorite);
   if (!rows.length) return '';
-  return markup`<section class="panel"><div class="section-heading"><h2><a href="#services">${tHtml('Favorite services')}</a></h2></div>
-    ${rows.map(row => markup`<a class="service-summary" href="#services"><strong>${escape(preference(row).description || row.name)}</strong><span class="${row.status === 'failed' ? 'service-failed' : ''}">${escape(t(statusLabels[row.status] || 'Unknown'))}</span></a>`)}
+  return markup`<section class="panel favorite-services"><div class="section-heading"><h2>${icon('services')}<a href="#services">${tHtml('Favorite services')}</a></h2></div>
+    ${rows.map(row => markup`<a class="attention-row service-summary ${row.status === 'failed' ? '' : 'info'}" href="#services">
+      <span class="attention-icon">${icon('services')}</span>
+      <div><strong>${escape(preference(row).description || row.name)}</strong><p class="${row.status === 'failed' ? 'service-failed' : ''}">${escape(t(statusLabels[row.status] || 'Unknown'))}</p></div>
+      <span class="icon-button" aria-hidden="true">${icon('arrow')}</span>
+    </a>`)}
   </section>`;
 }
 

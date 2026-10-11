@@ -6,6 +6,14 @@
  */
 
 :root {
+  /* Shared typography roles; rem keeps global text scaling consistent. */
+  --font-card-title: .9375rem;
+  --font-body: .75rem;
+  --font-secondary: .6875rem;
+  --font-caption: .625rem;
+  --font-micro: .5625rem;
+  --font-dialog-title: 1.4375rem;
+
   --bg: #f4f5f0;
   --paper: #fff;
   --soft: #fafbf7;

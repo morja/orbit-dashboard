@@ -77,16 +77,14 @@ function avatar(project) {
 
 function gitPreview(project) {
   if (!project.git.changed || !project.git.files?.length) return gitBadge(project.git);
-  const files = project.git.files.slice(0, 3).map((file) => file.path).join('\n');
-  const title = `${files}\n${t('Click to preview files')}`;
-  return `<button class="git-preview" data-id="${project.id}" title="${escape(title)}">${gitBadge(project.git)}</button>`;
+  return `<button class="git-preview" title="" data-id="${project.id}" aria-label="${escape(t('Click to preview files'))}">${gitBadge(project.git)}</button>`;
 }
 
-function branchLine(git) {
+function branchLine(git, id) {
   if (!git.branch) return '';
   const ahead = git.ahead > 0 ? ` · ↑${git.ahead}` : '';
   const behind = git.behind > 0 ? ` · ↓${git.behind}` : '';
-  return `<div class="branch">${icon('branch')}${escape(git.branch)}${ahead}${behind}${remoteLine(git)}</div>`;
+  return `<div class="branch">${icon('branch')}<button class="branch-history" title="" data-commits="${id}" aria-controls="git-dialog" aria-label="${escape(t('Recent commits for {branch}', { branch: git.branch }))}">${escape(git.branch)}</button>${ahead}${behind}${remoteLine(git)}</div>`;
 }
 
 function remoteLine(git) {
@@ -161,7 +159,7 @@ function projectRow(project) {
         </div>
       </td>
       ${showStorage() && sizeCell(project.size)}
-      <td class="git-cell" title="${escape(gitTitle)}">${gitPreview(project)}${branchLine(git)}</td>
+      <td class="git-cell" title="${escape(gitTitle)}">${gitPreview(project)}${branchLine(git, project.id)}</td>
       ${showLastChanged() && markup`<td class="modified-cell" title="${escape(t('File change or commit, excluding dependencies and build folders'))}${project.last_modified ? ' · ' + escape(new Date(project.last_modified * 1000).toLocaleString(locale())) : ''}">${project.last_modified ? escape(relativeTime(project.last_modified)) : '–'}</td>`}
       ${showDdev() && `<td class="ddev-cell">${ddevBadge(project.ddev)}</td>`}
       ${showNextStep() && markup`<td class="next-cell">

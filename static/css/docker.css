@@ -9,7 +9,7 @@
 
 .docker-free small {
   display: block;
-  font-size: 0.75rem;
+  font-size: var(--font-body);
   font-weight: 400;
   color: var(--muted);
   margin-top: 6px;
@@ -40,7 +40,7 @@
 .integration-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 0 0 14px; }
 .integration-toolbar .search-box { flex: 1 1 220px; min-width: 160px; }
 .integration-toolbar input { width: 100%; }
-.integration-toolbar > label:not(.search-box) { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 0.8rem; }
+.integration-toolbar > label:not(.search-box) { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: var(--font-body); }
 .container-kind { display: block; margin-top: 4px; color: var(--faint); }
 #container-list td { overflow-wrap: anywhere; }
 

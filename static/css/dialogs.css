@@ -24,7 +24,7 @@ dialog::backdrop {
 }
 
 .dialog-heading h2 {
-  font-size: 1.4375rem;
+  font-size: var(--font-dialog-title);
   margin: 5px 0;
   letter-spacing: -0.6px;
   font-weight: 550;
@@ -36,7 +36,7 @@ dialog::backdrop {
 
 dialog label {
   display: block;
-  font-size: 0.6875rem;
+  font-size: var(--font-secondary);
   font-weight: 500;
   margin-bottom: 7px;
   margin-top: 20px;
@@ -51,17 +51,17 @@ dialog select {
   color: var(--ink);
   background: var(--soft);
   resize: vertical;
-  font-size: 0.75rem;
+  font-size: var(--font-body);
 }
 
 dialog h3 {
-  font-size: 0.75rem;
+  font-size: var(--font-body);
   margin-top: 22px;
   font-weight: 550;
 }
 
 dialog > p {
-  font-size: 0.75rem;
+  font-size: var(--font-body);
   color: var(--muted);
 }
 
@@ -102,7 +102,38 @@ dialog > p {
 }
 
 .git-files span {
-  font-size: 0.5625rem;
+  font-size: var(--font-micro);
   color: var(--faint);
   flex: none;
 }
+
+/* Commit history uses the same modal frame and list separators as changed files. */
+.git-history > div { align-items: flex-start; justify-content: flex-start; }
+.git-history code { flex: 0 0 7ch; }
+.git-history-message { min-width: 0; font-size: var(--font-body); line-height: 1.4; overflow-wrap: anywhere; }
+.git-history time { display: block; margin-top: 3px; font-size: var(--font-caption); color: var(--muted); }
+
+.git-status-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 12px 0 18px; font-size: .7rem; color: var(--muted); }
+.git-status-summary > span:first-child { display: flex; align-items: center; gap: 6px; color: var(--text); }
+.git-status-summary svg { width: 14px; height: 14px; }
+.git-status-tabs { display: flex; gap: 5px; border-bottom: 1px solid var(--line); }
+.git-status-tabs button { padding: 8px 12px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--muted); font: inherit; font-size: var(--font-body); cursor: pointer; }
+.git-status-tabs button[aria-selected="true"] { color: var(--accent-text); border-bottom-color: var(--accent-text); }
+.git-status-content { min-height: 60px; }
+.git-status-content > .muted { font-size: var(--font-body); }
+
+/* Keep the frame stable across loading, empty states and either Git tab. */
+#git-dialog[open] {
+  display: flex;
+  flex-direction: column;
+  height: min(720px, calc(90vh / var(--ui-zoom, 1)));
+  overflow: hidden;
+}
+#git-dialog > :not(.git-status-content) { flex-shrink: 0; }
+#git-dialog .git-status-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+#git-dialog .dialog-actions { margin-top: 18px; }

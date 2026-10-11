@@ -1,3 +1,5 @@
+import { bindGitMiniPreviews } from './git-mini-preview.js';
+import { bindCommitHistory } from './commit-history.js';
 /*
  * Orbit dashboard entry point. All values come from the local backend
  * (server.py); workspace text is always escaped before it reaches the page.
@@ -31,6 +33,8 @@ bindProjectEvents();
 bindDockerEvents(render);
 bindServicesEvents(render);
 bindProjectActions();
+bindCommitHistory();
+bindGitMiniPreviews();
 bindSettings();
 bindServerSummaries();
 

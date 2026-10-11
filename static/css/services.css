@@ -9,26 +9,28 @@
 .services-panel th, .services-panel td { white-space: normal; overflow-wrap: anywhere; vertical-align: top; }
 .services-panel td { padding: 7px 10px; line-height: 1.35; }
 .services-panel th { padding: 8px 10px; }
-.services-panel td small { display: block; margin-top: .12rem; color: var(--muted); font-size: .65rem; }
+.services-panel td small { display: block; margin-top: .12rem; color: var(--muted); font-size: var(--font-caption); }
 .services-panel td p { margin: .15rem 0; }
-.services-panel td .button { padding: 4px 8px; font-size: .6875rem; line-height: 1.3; }
+.services-panel td .button { padding: 4px 8px; font-size: var(--font-secondary); line-height: 1.3; }
 .services-panel td .icon-button { width: 24px; height: 24px; }
 .services-panel .service-identifier { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 :root[data-density="comfortable"] .services-panel td { padding-block: 10px; }
 .services-panel .badge { white-space: normal; }
-.service-identifier, .service-program { font-family: var(--font-mono); font-size: .8rem; }
-.service-summary { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem; padding: .7rem 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
-.service-summary span { color: var(--muted); }
-.service-summary .service-failed { color: var(--red); }
+.service-identifier, .service-program { font-family: var(--font-mono); font-size: var(--font-body); }
+.favorite-services .service-summary { color: var(--text); text-decoration: none; }
+.favorite-services .service-summary strong { font-size: var(--font-body); font-weight: 550; }
+.favorite-services .service-summary p { font-size: var(--font-secondary); color: var(--muted); }
+.favorite-services .service-summary .service-failed { color: var(--red); }
+.favorite-services .service-summary:hover strong { color: var(--accent-text); }
 
 #service-dialog { padding: 18px; }
 #service-form { display: grid; gap: .45rem; }
-#service-form h2 { margin: 0; font-size: 1.15rem; }
-#service-form p { margin: 0; font-size: .75rem; line-height: 1.4; }
+#service-form h2 { margin: 0; font-size: var(--font-dialog-title); }
+#service-form p { margin: 0; font-size: var(--font-body); line-height: 1.4; }
 #service-form label { display: block; margin: 0; }
 #service-description { width: 100%; padding: .45rem; border: 1px solid var(--line-strong); border-radius: 9px; color: var(--ink); background: var(--soft); }
 #service-label { overflow-wrap: anywhere; }
-.service-facts { display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: .25rem .7rem; font-size: .75rem; margin: .2rem 0; }
+.service-facts { display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: .25rem .7rem; font-size: var(--font-body); margin: .2rem 0; }
 .service-facts dt { color: var(--muted); }
 .service-facts dd { margin: 0; min-width: 0; white-space: normal; overflow-wrap: anywhere; }
 .services-panel .integration-toolbar input[type="checkbox"] { width: auto; }

@@ -3,6 +3,16 @@
  * filled at runtime. Plural forms use the categories of Intl.PluralRules.
  */
 export default {
+  'Clean': 'Keine Änderungen',
+  'Git status': 'Git-Status',
+  'Changed files': 'Geänderte Dateien',
+  'History': 'Verlauf',
+  'Comparison unavailable': 'Vergleich nicht verfügbar',
+  'Recent commits': 'Letzte Commits',
+  'Recent commits for {branch}': 'Letzte Commits für {branch}',
+  'Loading commits…': 'Commits werden geladen…',
+  'No commits yet': 'Noch keine Commits',
+  'Commit history unavailable': 'Commit-Verlauf nicht verfügbar',
   "Show all my services": "Alle meine Dienste anzeigen",
   "{count} personal services are hidden by the other filters.": "{count} eigene Dienste werden durch die anderen Filter ausgeblendet.",
   "Cron job": "Cron-Job",
@@ -294,7 +304,6 @@ export default {
   'Low': 'Niedrig',
   'Your note stays local. It does not change project files.': 'Deine Notiz bleibt lokal gespeichert. Sie verändert keine Projektdateien.',
   'Project note saved': 'Projektnotiz gespeichert',
-  'CHANGED GIT FILES': 'OFFENE GIT-DATEIEN',
   'New': 'Neu',
   'Modified': 'Geändert',
   'Added': 'Hinzugefügt',

@@ -20,7 +20,7 @@
 
 .settings-intro {
   color: var(--muted);
-  font-size: 0.75rem;
+  font-size: var(--font-body);
   margin: 8px 0 18px;
 }
 
@@ -41,7 +41,7 @@
   color: var(--muted);
   background: transparent;
   font: inherit;
-  font-size: 0.75rem;
+  font-size: var(--font-body);
   white-space: nowrap;
   cursor: pointer;
 }
@@ -80,13 +80,13 @@
 }
 
 .settings-section h3 {
-  font-size: 0.9375rem;
+  font-size: var(--font-card-title);
   color: var(--ink);
   margin: 0 0 8px;
 }
 
 .settings-section p {
-  font-size: 0.6875rem;
+  font-size: var(--font-secondary);
   color: var(--muted);
 }
 
@@ -146,14 +146,14 @@
 }
 
 .source-title {
-  font-size: 0.75rem;
+  font-size: var(--font-body);
   font-weight: 500;
 }
 
 .source-meta {
   display: block;
   color: var(--muted);
-  font-size: 0.6875rem;
+  font-size: var(--font-secondary);
   margin: 5px 0 0 17px;
 }
 
@@ -178,7 +178,7 @@ details.settings-source[open] summary {
   padding: 10px;
   color: var(--ink);
   background: var(--paper);
-  font-size: 0.75rem;
+  font-size: var(--font-body);
 }
 
 #settings-dialog .settings-toggle {

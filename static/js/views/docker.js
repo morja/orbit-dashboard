@@ -77,7 +77,7 @@ function usagePanel(docker) {
   const empty = `<tr><td colspan="5">${tHtml('Docker storage is currently unavailable.')}</td></tr>`;
   return markup`
     <section class="panel docker-panel">
-      <div class="section-heading"><h2>${icon('server')}${tHtml('Docker · Storage breakdown')}</h2><span>${escape(ago(docker.checked_at))}</span></div>
+      <div class="section-heading"><h2>${icon('cube')}${tHtml('Docker · Storage breakdown')}</h2><span>${escape(ago(docker.checked_at))}</span></div>
       <div class="table-wrap">
         <table>
           <thead>
@@ -152,7 +152,7 @@ function containerPanel(docker) {
     <td title="${escape(row.status)}">${badge(row.state, row.state === 'running' ? '' : 'gray')}</td><td>${escape(row.ports || '–')}</td>
   </tr>`);
   return markup`<section class="panel docker-panel" id="container-list">
-    <div class="section-heading"><h2>${icon('server')}${tHtml('Docker containers')}</h2><span>${escape(ago(docker.checked_at))}</span></div>
+    <div class="section-heading"><h2>${icon('cube')}${tHtml('Docker containers')}</h2><span>${escape(ago(docker.checked_at))}</span></div>
     ${listToolbar('containers')}
     <div class="table-wrap"><table><thead><tr>${listHeader('containers', 'name', t('Name'))}${listHeader('containers', 'image', t('Image'))}${listHeader('containers', 'state', t('Status'))}${listHeader('containers', 'ports', t('Ports'))}</tr></thead>
     <tbody>${rows.length ? rows : `<tr><td colspan="4">${escape(systemMessage(docker.containers_error) || t('No containers match this selection.'))}</td></tr>`}</tbody></table></div>

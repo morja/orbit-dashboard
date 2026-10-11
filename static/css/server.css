@@ -15,7 +15,7 @@
 }
 
 .moon-heading p {
-  font-size: 0.6875rem;
+  font-size: var(--font-secondary);
   color: var(--muted);
   margin: 0;
 }
@@ -38,7 +38,7 @@
   gap: 18px;
   border-bottom: 1px solid var(--line-soft);
   padding: 11px 0;
-  font-size: 0.6875rem;
+  font-size: var(--font-secondary);
 }
 
 .detail-row:last-child {
@@ -119,7 +119,7 @@
 }
 
 .server-choice-host {
-  font-size: .6875rem;
+  font-size: var(--font-secondary);
   color: var(--muted);
 }
 
@@ -213,7 +213,7 @@
 .server-addresses { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
 .server-address {
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
+  font-size: var(--font-secondary);
   overflow-wrap: anywhere;
   text-align: left;
   padding: 4px 7px;

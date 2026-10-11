@@ -30,6 +30,51 @@ const shot = (name) => path.join(os.tmpdir(), `orbit-${name}.png`);
 
     await page.goto(ready.url + '/#key=' + ready.key);
     await page.waitForSelector('#project-table tbody tr');
+    // Both Git previews use click-operated dialogs; polling must not replace history.
+    let historyRequests = 0;
+    page.on('request', request => { if (request.url().endsWith('/commits')) historyRequests++; });
+    const historyButton = page.locator('.branch-history').first();
+    await historyButton.hover();
+    await page.waitForSelector('#git-mini-preview:not([hidden])');
+    assert.equal(await page.locator('#git-mini-preview p').count(), 1);
+    assert.equal(await page.locator('#git-mini-preview script').count(), 0);
+    assert.match(await page.locator('#git-mini-preview small').innerText(), /ago/);
+    await historyButton.click();
+    assert(await page.locator('#git-mini-preview').isHidden());
+    await page.waitForSelector('#git-dialog .git-history > div');
+    assert.equal(await page.locator('#git-dialog .git-history > div').count(), 10);
+    assert.equal(await page.locator('#git-dialog script').count(), 0);
+    const stable = await page.evaluate(async () => {
+      const dialog = document.getElementById('git-dialog');
+      const html = dialog.innerHTML;
+      for (let i = 0; i < 3; i++) (await import('/js/render.js')).render();
+      return dialog.open && dialog.innerHTML === html;
+    });
+    assert(stable, 'History dialog must remain unchanged during polling redraws');
+    assert.equal(historyRequests, 1);
+    await page.keyboard.press('Escape');
+    await historyButton.focus();
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#git-dialog[open] .git-history');
+    assert.equal(historyRequests, 1, 'Repeated openings use cached history');
+    const historyFrame = await page.locator('#git-dialog').boundingBox();
+    await page.locator('[data-git-tab="files"]').click();
+    assert.deepEqual(await page.locator('#git-dialog').boundingBox(), historyFrame, 'Switching Git tabs must keep the dialog frame unchanged');
+    assert.equal(await page.locator('[data-git-tab="files"]').getAttribute('aria-selected'), 'true');
+    assert(await page.locator('.git-status-summary').innerText());
+    await page.keyboard.press('ArrowRight');
+    await page.waitForSelector('#git-dialog .git-history');
+    assert.equal(historyRequests, 1, 'Tabs share the history cache');
+
+    for (const theme of ['light', 'dark']) {
+      await page.setViewportSize({width:390,height:780});
+      await page.evaluate(theme => { document.documentElement.dataset.theme = theme; document.documentElement.style.setProperty('--ui-zoom','1.5'); }, theme);
+      const bounds = await page.locator('#git-dialog').boundingBox();
+      assert(bounds.x >= 0 && bounds.x + bounds.width <= 391);
+    }
+    await page.locator('.close-git').click();
+    await page.setViewportSize({width:1440,height:1100});
+    await page.evaluate(() => { document.documentElement.dataset.theme='light'; document.documentElement.style.setProperty('--ui-zoom','1'); });
     // Service annotations persist on the backend; filters separate origin and scope.
     await page.locator('nav [data-view="services"]').click();
     const serviceRows = page.locator('[data-service-id]');
@@ -105,6 +150,18 @@ const shot = (name) => path.join(os.tmpdir(), `orbit-${name}.png`);
     }
     await page.locator('nav [data-view="overview"]').click();
     assert.match(await page.locator('.service-summary').innerText(), /My backup/);
+    const cardFonts = await page.evaluate(() => {
+      const font = selector => getComputedStyle(document.querySelector(selector)).fontSize;
+      return {favoriteTitle: font('.favorite-services h2'), attentionTitle: font('.overview-attention h2'),
+        favoriteText: font('.service-summary strong'), attentionText: font('.overview-attention .attention-row strong'),
+        favoriteStatus: font('.service-summary p'), attentionDescription: font('.overview-attention .attention-row p')};
+    });
+    assert.equal(cardFonts.favoriteTitle, cardFonts.attentionTitle);
+    assert.equal(cardFonts.favoriteText, cardFonts.attentionText);
+    assert.equal(cardFonts.favoriteStatus, cardFonts.attentionDescription);
+    await page.locator('.overview-rail').screenshot({path: '/private/tmp/orbit-style-audit.png'});
+    assert.notEqual(await page.locator('nav [data-view="services"] svg').innerHTML(), await page.locator('.overview-attention h2 svg').innerHTML());
+
     await page.evaluate(async () => {
       Object.assign((await import('/js/store.js')).store.data.config, {language: 'en', theme: 'light'});
       (await import('/js/render.js')).render();
@@ -245,10 +302,20 @@ const shot = (name) => path.join(os.tmpdir(), `orbit-${name}.png`);
       assert.notEqual(await page.locator(`[data-sort="${key}"]`).locator('..').getAttribute('aria-sort'), 'none');
     }
 
+    await page.locator('.git-preview').first().hover();
+    await page.waitForSelector('#git-mini-preview li');
+    assert((await page.locator('#git-mini-preview li').count()) <= 3);
+    assert.equal(await page.locator('#git-mini-preview strong').innerText(), 'Changed files');
+    assert(await page.locator('#git-mini-preview code').evaluateAll(items => items.every(item => {
+      const style = getComputedStyle(item);
+      return style.whiteSpace === 'nowrap' && style.fontFamily === getComputedStyle(item.closest('.git-mini-preview')).fontFamily;
+    })), 'File mini previews must use the shared font without wrapping');
+
+    assert.equal(await page.locator('.git-preview').first().getAttribute('title'), '');
     await page.locator('.git-preview').first().click();
     await page.waitForSelector('#git-dialog[open]');
     assert((await page.locator('#git-dialog .git-files code').count()) <= 12);
-    await page.locator('.close-git').click();
+    await page.keyboard.press('Escape');
 
     // Actions send the key from the address.
     let terminalKey;
@@ -545,9 +612,15 @@ const shot = (name) => path.join(os.tmpdir(), `orbit-${name}.png`);
     assert.equal(await page.locator('body').getAttribute('data-sidebar'),'collapsed');
     await page.locator('#sidebar-toggle').click();
     // Every view remains inside a narrow window with the compact shared header.
-    for (const view of ['projects','docker','moon','storage']) {
+    for (const view of ['overview','projects','docker','moon','storage','services']) {
       await page.setViewportSize({width:390,height:844});
       await page.locator(`nav [data-view="${view}"]`).click();
+      assert(await page.locator('.section-heading h2').evaluateAll(headings => headings.every(heading => {
+        const root = getComputedStyle(document.documentElement);
+        const expected = parseFloat(root.fontSize) * parseFloat(root.getPropertyValue('--font-card-title'));
+        return Math.abs(parseFloat(getComputedStyle(heading).fontSize) - expected) < .1;
+      })), 'Card headings must use the same typography role in ' + view);
+
       await page.waitForFunction(view => document.body.dataset.view === view,view);
       assert.equal(await page.locator('.page-heading').isVisible(),false);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth),false,view);

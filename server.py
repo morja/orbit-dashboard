@@ -52,6 +52,23 @@ def executable(name):
     return shutil.which(name) or next((str(p) for p in [Path("/opt/homebrew/bin") / name, Path("/usr/local/bin") / name] if p.exists()), name)
 
 
+def recent_commits(path):
+    """Read local HEAD history without fetching or executing project code."""
+    args = ["git", "-C", str(path)]
+    _, code = command(args + ["rev-parse", "--is-inside-work-tree"])
+    if code != 0:
+        raise ValueError("Commit history unavailable")
+    _, code = command(args + ["rev-parse", "--verify", "HEAD"])
+    if code != 0:
+        return []
+    output, code = command(args + ["log", "-10", "--no-show-signature", "--abbrev=7", "--format=%h%x00%s%x00%ct", "-z", "HEAD", "--"])
+    if code != 0:
+        raise ValueError("Commit history unavailable")
+    fields = output.rstrip("\0").split("\0")
+    return [{"id": fields[i], "subject": fields[i + 1], "timestamp": int(fields[i + 2])}
+            for i in range(0, len(fields), 3)] if output else []
+
+
 def project_id(path):
     return hashlib.sha256(str(path).encode()).hexdigest()[:20]
 
@@ -794,6 +811,17 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(None, 304, headers={"ETag": etag})
             snapshot["server_time"] = server_time
             return self.send(snapshot, headers={"ETag": etag})
+        match = re.fullmatch(r"/api/projects/([a-f0-9]{20})/commits", path)
+        if match:
+            dashboard = self.server.dashboard
+            with dashboard.lock:
+                project = next((dict(p) for p in dashboard.projects if p["id"] == match[1]), None)
+            if project is None:
+                return self.send({"error": "Project not found"}, 404)
+            try:
+                return self.send({"commits": recent_commits(project["path"])})
+            except ValueError:
+                return self.send({"error": "Commit history unavailable"}, 503)
         if path == "/api/settings":
             return self.send(copy.deepcopy(self.server.dashboard.config))
         if path == "/api/detect":

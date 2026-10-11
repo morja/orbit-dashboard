@@ -148,3 +148,18 @@ Service tables override the shared nowrap rule and use fixed column layout so
 identifiers and program names cannot overlap actions. Full paths appear only in
 the wrapping Details facts. My services uses collector ownership hints unless a
 persisted own-service boolean overrides them; scope remains a separate filter.
+
+Git badges and branch buttons share the Git status dialog, opening Changed files
+or History respectively. Tabs support arrow keys and show the branch, upstream
+and ahead/behind counts from the last local project check. Dashboard polling
+leaves the open dialog untouched. History reads ten local HEAD commits lazily
+through `/api/projects/<id>/commits`, with a 30-second cache shared by the mini
+preview. No fetch runs. Mini previews show three changed paths or the latest
+commit subject with its timestamp; full details remain available on click.
+
+The Git status dialog keeps a fixed viewport-bounded frame across tabs and loading
+states; only the content panel scrolls. Mini-preview paths use the shared UI font
+and stay on one line, with ellipsis only when a path exceeds available width.
+
+Shared typography and component rules are maintained in [ui-style.md](ui-style.md).
+Use the named font-size tokens in `tokens.css` for equivalent elements across views.

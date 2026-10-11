@@ -31,7 +31,7 @@
   align-items: center;
   justify-content: space-between;
   color: var(--muted);
-  font-size: 0.6875rem;
+  font-size: var(--font-secondary);
 }
 
 .metric-top svg {
@@ -52,7 +52,7 @@
 }
 
 .metric-value small {
-  font-size: 0.75rem;
+  font-size: var(--font-body);
   letter-spacing: 0;
   color: var(--faint);
   font-weight: 400;
@@ -62,7 +62,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.625rem;
+  font-size: var(--font-caption);
   color: var(--faint);
   gap: 8px;
 }
@@ -76,7 +76,7 @@
 
 .docker-metric .scope {
   margin: 9px 0 0;
-  font-size: 0.625rem;
+  font-size: var(--font-caption);
 }
 
 .columns {
@@ -128,12 +128,12 @@
 
 .attention-row strong {
   display: block;
-  font-size: 0.6875rem;
+  font-size: var(--font-secondary);
   font-weight: 500;
 }
 
 .attention-row p {
-  font-size: 0.625rem;
+  font-size: var(--font-caption);
   color: var(--muted);
   margin: 2px 0 0;
 }
@@ -154,7 +154,7 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 0.625rem;
+  font-size: var(--font-caption);
   color: var(--muted);
 }
 
@@ -182,7 +182,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  font-size: 0.625rem;
+  font-size: var(--font-caption);
   color: var(--muted);
 }
 
@@ -240,7 +240,7 @@
   }
 
   .metric-top {
-    font-size: 0.625rem;
+    font-size: var(--font-caption);
   }
 
   .metric-value {
@@ -248,7 +248,7 @@
   }
 
   .metric-bottom {
-    font-size: 0.5625rem;
+    font-size: var(--font-micro);
   }
 
   .service-dots {
@@ -283,7 +283,7 @@
 }
 
 .overview-status .metric-top {
-  font-size: .6875rem;
+  font-size: var(--font-secondary);
   gap: 8px;
 }
 
@@ -293,11 +293,11 @@
 }
 
 .overview-status .metric-value small {
-  font-size: .6875rem;
+  font-size: var(--font-secondary);
 }
 
 .overview-status .metric-bottom {
-  font-size: .625rem;
+  font-size: var(--font-caption);
   flex-wrap: wrap;
   justify-content: flex-start;
 }
@@ -311,7 +311,7 @@
 }
 
 .overview-status .scope {
-  font-size: .625rem;
+  font-size: var(--font-caption);
   margin: 5px 0 0;
 }
 
@@ -339,7 +339,7 @@
 }
 
 .overview-rail h2 {
-  font-size: .875rem;
+  font-size: var(--font-card-title);
   flex-wrap: wrap;
 }
 
@@ -359,11 +359,11 @@
 }
 
 .overview-rail .attention-row strong {
-  font-size: .75rem;
+  font-size: var(--font-body);
 }
 
 .overview-rail .attention-row p {
-  font-size: .6875rem;
+  font-size: var(--font-secondary);
 }
 
 .overview-rail .attention-icon {
@@ -378,7 +378,7 @@
 
 .overview-rail .moon-summary {
   flex-wrap: wrap;
-  font-size: .6875rem;
+  font-size: var(--font-secondary);
   margin-top: 12px;
   padding-top: 10px;
 }
@@ -389,7 +389,7 @@
 }
 
 .server-services summary {
-  font-size: .6875rem;
+  font-size: var(--font-secondary);
   color: var(--muted);
   cursor: pointer;
 }
