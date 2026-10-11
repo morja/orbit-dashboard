@@ -23,7 +23,7 @@ jobs:
       contents: write
     env:
       RELEASE_VERSION: ${{ inputs.version }}
-      RELEASE_DIRECTORY: ${{ runner.temp }}/orbit-release
+      RELEASE_DIRECTORY: /tmp/orbit-release-${{ github.run_id }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -38,7 +38,7 @@ jobs:
       - name: Prepare clean source and notes
         run: python3 scripts/prepare_release.py --version "$RELEASE_VERSION" --output "$RELEASE_DIRECTORY"
       - name: Test the exact export
-        working-directory: ${{ runner.temp }}/orbit-release/source
+        working-directory: ${{ env.RELEASE_DIRECTORY }}/source
         run: |
           python3 -m unittest discover -s tests
           npm run check
