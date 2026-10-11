@@ -12,9 +12,4 @@
 .goaccess-toolbar > p { margin: 0; font-size: var(--font-caption); }
 .goaccess-toolbar > .notice { flex-basis: 100%; }
 .goaccess-toolbar > .button { padding: 6px 10px; font-size: var(--font-secondary); }
-.goaccess-settings { margin: 0; }
-.goaccess-settings[open] { flex-basis: 100%; }
-.goaccess-settings summary { font-size: var(--font-secondary); }
-.goaccess-settings summary { cursor: pointer; }
-.goaccess-settings input:not([type="checkbox"]) { width: 100%; }
 .goaccess-report { width: 100%; min-height: 75vh; border: 0; background: white; }

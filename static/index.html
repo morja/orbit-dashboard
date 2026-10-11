@@ -170,7 +170,6 @@
         <div class="settings-panel" id="settings-panel-tools" role="tabpanel" aria-labelledby="settings-tab-tools" tabindex="0" hidden>
           <section class="settings-section">
             <h3>Tools</h3>
-            <button type="button" class="button secondary" id="configure-goaccess">GoAccess integration</button>
             <label class="settings-toggle"><input type="checkbox" id="setting-services_enabled">Check local background services</label>
             <label class="settings-toggle"><input type="checkbox" id="setting-ddev_enabled">Check DDEV projects</label>
             <label class="settings-toggle"><input type="checkbox" id="setting-docker_enabled">Check Docker and Colima</label>
@@ -178,6 +177,16 @@
               <label for="setting-terminal">Terminal<select id="setting-terminal"><option value="auto">Automatic</option><option>cmux</option><option>Terminal</option><option>iTerm</option><option value="none">Disabled</option></select></label>
               <label for="setting-editor">Editor<select id="setting-editor"><option value="none">None</option><option>Visual Studio Code</option><option>Cursor</option><option>PyCharm</option><option>IntelliJ IDEA</option></select></label>
             </div>
+          </section>
+          <section class="settings-section">
+            <h3>GoAccess integration</h3>
+            <label class="settings-toggle"><input type="checkbox" id="setting-goaccess_enabled">Enable GoAccess</label>
+            <p class="muted">GoAccess prepares reports on your server. Orbit only downloads them over SSH.</p>
+            <div class="form-row">
+              <label for="setting-goaccess_host">SSH alias<input id="setting-goaccess_host" maxlength="200" placeholder="server-alias"></label>
+              <label for="setting-goaccess_command">Export command<input id="setting-goaccess_command" maxlength="4096" placeholder="/path/to/export"></label>
+            </div>
+            <p class="muted">Configure an SSH alias and a read-only export executable. No server changes are made by Orbit.</p>
           </section>
         </div>
 

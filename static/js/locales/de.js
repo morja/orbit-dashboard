@@ -7,7 +7,6 @@ export default {
   "GoAccess integration": "GoAccess-Integration",
   "Enable GoAccess": "GoAccess aktivieren",
   "Export command": "Export-Befehl",
-  "Save integration": "Integration speichern",
   "Load reports": "Berichte laden",
   "Requests": "Anfragen",
   "Estimated visitors": "Geschätzte Besucher",
@@ -17,7 +16,6 @@ export default {
   "Local copy": "Lokale Kopie",
   "GoAccess prepares reports on your server. Orbit only downloads them over SSH.": "GoAccess erstellt die Berichte auf deinem Server. Orbit lädt sie ausschließlich per SSH herunter.",
   "Configure an SSH alias and a read-only export executable. No server changes are made by Orbit.": "Konfiguriere einen SSH-Alias und einen lesenden Export-Befehl. Orbit verändert nichts auf dem Server.",
-  "Integration saved.": "Integration gespeichert.",
   "Reports cover imported logs, with up to one year of history. Visitor counts are estimates; requests include assets, bots and APIs.": "Die Berichte umfassen importierte Logs mit bis zu einem Jahr Historie. Besucherzahlen sind Schätzungen; Anfragen enthalten auch Dateien, Bots und APIs.",
   "Waiting for dedicated logs": "Warten auf getrennte Logs",
 

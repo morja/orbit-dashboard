@@ -225,6 +225,12 @@ function applyDetection(event) {
 
 /* Opening and saving */
 
+function validateGoAccessFields() {
+  const enabled = field('goaccess_enabled').checked;
+  for (const key of ['goaccess_host', 'goaccess_command']) field(key).required = enabled;
+}
+
+
 export async function openSettings(section = 'appearance') {
   try {
     draft = await api('/api/settings');
@@ -247,6 +253,10 @@ export async function openSettings(section = 'appearance') {
       select.value = value;
     }
     for (const key of ['services_enabled', 'ddev_enabled', 'docker_enabled', 'remember_list_preferences', 'show_next_step', 'show_storage', 'show_last_changed', 'show_ddev']) field(key).checked = draft[key];
+    field('goaccess_enabled').checked = Boolean(draft.goaccess?.enabled);
+    field('goaccess_host').value = draft.goaccess?.host || '';
+    field('goaccess_command').value = draft.goaccess?.command || '';
+    validateGoAccessFields();
     field('excluded_dirs').value = draft.excluded_dirs.join('\n');
     field('category_order').value = (draft.category_order || []).join('\n');
     document.getElementById('settings-intervals').innerHTML = intervalFields(draft);
@@ -276,6 +286,7 @@ function collectSettings() {
   });
   for (const key of ['terminal', 'editor', 'theme', 'palette', 'language', 'density']) config[key] = field(key).value;
   for (const key of ['services_enabled', 'ddev_enabled', 'docker_enabled', 'remember_list_preferences', 'show_next_step', 'show_storage', 'show_last_changed', 'show_ddev']) config[key] = field(key).checked;
+  config.goaccess = { enabled: field('goaccess_enabled').checked, host: field('goaccess_host').value, command: field('goaccess_command').value };
   // The single legacy server fields are replaced by the server list.
   Object.assign(config, { moon_enabled: false, moon_host: '', moon_command: 'moon-status', moon_label: 'Server' });
   for (const key of ['font_size', 'contrast', 'zoom']) config[key] = Number(field(key).value);
@@ -296,7 +307,7 @@ async function saveSettings(event) {
   try {
     store.data.config = await api('/api/settings', collectSettings());
     dialog.close();
-    render();
+    render({ force: true });
     notify(t('Settings saved. Your workspace is updating.'));
     await poll();
   } catch (error) {
@@ -308,6 +319,7 @@ async function saveSettings(event) {
 }
 
 export function bindSettings() {
+  field('goaccess_enabled').addEventListener('change', validateGoAccessFields);
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
     if (store.data?.config) applyAppearance(store.data.config);
   });

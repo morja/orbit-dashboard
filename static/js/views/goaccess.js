@@ -1,7 +1,7 @@
 /* Optional GoAccess integration. Orbit reads prepared reports, never server logs. */
 import { api } from '../api.js';
 import { escape, markup } from '../html.js';
-import { locale, t, tHtml } from '../i18n.js';
+import { locale, tHtml } from '../i18n.js';
 import { store } from '../store.js';
 
 let snapshot = { reports: [] };
@@ -22,19 +22,7 @@ export function goaccessView() {
   const number = value => Number(value || 0).toLocaleString(locale());
   return markup`
     <section class="panel goaccess-toolbar">
-      <details class="goaccess-settings" ${config.enabled ? '' : 'open'}>
-        <summary>${tHtml('GoAccess integration')}</summary>
-        <p>${tHtml('GoAccess prepares reports on your server. Orbit only downloads them over SSH.')}</p>
-        <p class="muted">${tHtml('Configure an SSH alias and a read-only export executable. No server changes are made by Orbit.')}</p>
-        <form id="goaccess-settings">
-          <label><input type="checkbox" name="enabled" ${config.enabled ? 'checked' : ''}> ${tHtml('Enable GoAccess')}</label>
-          <div class="form-row">
-            <label>${tHtml('SSH alias')}<input name="host" maxlength="200" value="${escape(config.host)}" placeholder="server-alias"></label>
-            <label>${tHtml('Export command')}<input name="command" maxlength="4096" value="${escape(config.command)}" placeholder="/path/to/export"></label>
-          </div>
-          <button class="button secondary" ${busy ? 'disabled' : ''}>${tHtml('Save integration')}</button>
-        </form>
-      </details>
+      <button type="button" class="button secondary setup-settings" data-settings-section="tools">${tHtml('GoAccess integration')}</button>
       ${config.enabled ? markup`<button id="goaccess-refresh" class="button secondary" ${busy ? 'disabled' : ''}>${busy ? tHtml('Loading reports…') : tHtml('Load reports')}</button>` : ''}
       ${snapshot.downloadedAt && config.enabled ? `<p class="muted">${tHtml('Local copy')}: ${escape(new Date(snapshot.downloadedAt).toLocaleString(locale()))}</p>` : ''}
       ${message ? `<p role="status" class="notice">${escape(message)}</p>` : ''}
@@ -57,30 +45,12 @@ export function goaccessView() {
 export function bindGoAccess(render) {
   redraw = () => render({ force: true });
   document.addEventListener('click', async event => {
-    if (event.target.closest('#configure-goaccess')) {
-      document.getElementById('settings-dialog').close();
-      location.hash = 'goaccess';
-    }
     const card = event.target.closest('[data-goaccess-report]');
     if (card) { selected = card.dataset.goaccessReport; redraw(); }
     if (!event.target.closest('#goaccess-refresh') || busy) return;
     busy = true; message = ''; redraw();
     try { snapshot = await api('/api/goaccess/refresh', {}); }
     catch (error) { message = error.message; }
-    finally { busy = false; redraw(); }
-  });
-  document.addEventListener('submit', async event => {
-    if (event.target.id !== 'goaccess-settings') return;
-    event.preventDefault();
-    const fields = new FormData(event.target);
-    const integration = { enabled: fields.has('enabled'), host: fields.get('host'), command: fields.get('command') };
-    busy = true;
-    try {
-      const config = await api('/api/settings');
-      config.goaccess = integration;
-      store.data.config = await api('/api/settings', config);
-      message = t('Integration saved.');
-    } catch (error) { message = error.message; }
     finally { busy = false; redraw(); }
   });
 }

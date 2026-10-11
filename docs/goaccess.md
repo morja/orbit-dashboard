@@ -1,6 +1,8 @@
 # Optional GoAccess integration
 
-Enable the integration in Settings → Tools → GoAccess integration. Configure an
+Enable the integration in Settings → Tools → GoAccess integration and apply changes
+with the normal Settings Save button. Disable it there to hide Web traffic without
+changing server preparation or deleting cached reports. Configure an
 existing trusted SSH alias and one read-only export executable. Fresh installs
 keep it disabled. The integration has no automatic collector and does not change
 servers; Load reports downloads a prepared snapshot with a five-minute cooldown.
