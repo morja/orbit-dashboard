@@ -12,6 +12,8 @@ const shot = (name) => path.join(os.tmpdir(), `orbit-${name}.png`);
   const fixture = spawn(process.env.ORBIT_TEST_PYTHON || 'python3', [path.join(__dirname, 'serve_dashboard_fixture.py')]);
   fixture.stderr.on('data', (data) => process.stderr.write(data));
   let browser;
+  let page;
+  const errors = [];
   try {
     const lines = readline.createInterface({ input: fixture.stdout });
     const ready = await new Promise((resolve, reject) => {
@@ -20,9 +22,13 @@ const shot = (name) => path.join(os.tmpdir(), `orbit-${name}.png`);
       fixture.once('exit', (code) => { clearTimeout(timer); reject(new Error('Fixture exited: ' + code)); });
     });
     browser = await chromium.launch({ executablePath: process.env.ORBIT_BROWSER_EXECUTABLE || undefined, headless: true });
-    const page = await browser.newPage({ viewport: { width: 1440, height: 1100 }, deviceScaleFactor: 1 });
+    page = await browser.newPage({ viewport: { width: 1440, height: 1100 }, deviceScaleFactor: 1 });
     page.setDefaultTimeout(15000);
-    const errors = [];
+    page.on('requestfailed', request => {
+      const failure = request.failure()?.errorText;
+      // Reloads deliberately cancel the previous page's in-flight polling.
+      if (failure !== 'net::ERR_ABORTED') errors.push(`${new URL(request.url()).pathname}: ${failure}`);
+    });
     page.on('pageerror', (error) => errors.push(error.message));
     page.on('console', (msg) => { if (msg.type() === 'error') errors.push(msg.text()); });
     const names = () => page.locator('#project-table .name-button strong').allTextContents();
@@ -656,6 +662,20 @@ const shot = (name) => path.join(os.tmpdir(), `orbit-${name}.png`);
     }), [['changes', 'changes', {key: 'name', direction: 'asc'}, {key: 'name', direction: 'asc'}], 'changes', 'asc']);
     assert.deepEqual(errors.filter((message) => !message.includes('403')), []);
     console.log('Dashboard checks passed: sorting, filters, archive, action key, dialogs, Docker, server, storage, narrow layout.');
+  } catch (error) {
+    if (page && !page.isClosed()) {
+      console.error('Dashboard failure diagnostics:', JSON.stringify({
+        errors,
+        state: await page.evaluate(() => ({
+          route: location.hash.startsWith('#key=') ? '#key=[redacted]' : location.hash,
+          view: document.body.dataset.view,
+          connectionLost: !document.getElementById('connection-error').hidden,
+          content: document.getElementById('content').innerText.slice(0, 1200),
+        })),
+      }));
+      await page.screenshot({path: shot('browser-failure'), fullPage: true});
+    }
+    throw error;
   } finally {
     await browser?.close();
     fixture.kill();

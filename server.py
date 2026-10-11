@@ -4,7 +4,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from datetime import datetime, timezone
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer as StandardThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs
 import local_services
@@ -33,6 +33,12 @@ APP = Path(__file__).resolve().parent
 SKIP = {"node_modules", "vendor", "build", "dist", "target", "Pods", "DerivedData", "__pycache__"}
 STATES = {"active", "paused", "blocked", "done", "archived"}
 PRIORITIES = {"normal", "high", "low"}
+
+
+class ThreadingHTTPServer(StandardThreadingHTTPServer):
+    # Browsers request many modules and stylesheets together. The stdlib queue
+    # of five can reset these connections before the accept loop catches up.
+    request_queue_size = 128
 
 
 def stamp():
