@@ -34,3 +34,15 @@ The native Mac app starts server.py --managed when opened and stops its owned
 process group when closed. Static changes need a reload; backend changes need
 an app restart; native changes need a rebuild. Do not leave a manual production
 backend running. Synthetic fixture servers are allowed for isolated checks.
+
+## Commit messages
+
+Use Conventional Commits for new commits: `type(scope): description`. Write the
+short imperative description in English. Use `feat`, `fix`, `docs`, `style`,
+`refactor`, `perf`, `test`, `build`, `ci`, `chore` or `revert`; scope is optional.
+Use `!` and a `BREAKING CHANGE:` footer for incompatible changes. Release commits
+use `chore(release): prepare <version>`. Do not rewrite published history to
+retrofit this convention. See CONTRIBUTING.md for examples.
+
+Frontend changes must follow docs/ui-style.md and reuse shared typography tokens
+and components for equivalent elements across views.

@@ -16,11 +16,23 @@ Run relevant checks, and verify UI changes in both languages and light/dark mode
 Explain the concrete problem, resulting behavior and validation in change proposals.
 Do not contribute personal paths, notes, logs, databases or credentials.
 
-## Before public release
+## Commit messages
 
-- Audit a clean export for personal content. The private development history
-  contains older personal configuration and needs review before publication.
-- Use the release checklist in docs/release-checklist.md. Keep local maintainer rules private.
-- Verify AI setup on a second Mac.
-- Add the public repository address and download instructions.
-- Distinguish source distribution from a future standalone signed app.
+Use Conventional Commits for new work:
+
+```text
+feat(git): add recent commit history
+fix(ui): keep Git status dialog size stable
+docs: clarify local setup requirements
+chore(release): prepare v0.1.0-preview.3
+```
+
+The format is `type(scope): description`; scope is optional. Use a short English
+imperative description without a final period. Supported types are `feat`, `fix`,
+`docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore` and `revert`.
+Use `!` before the colon and a `BREAKING CHANGE:` footer for incompatible changes.
+These conventions apply to new commits; published history is preserved.
+
+Use [the release checklist](docs/release-checklist.md) to prepare a clean source
+preview, validate its exact export and publish it to the existing public repository.
+Local maintainer instructions and runtime data must remain private.

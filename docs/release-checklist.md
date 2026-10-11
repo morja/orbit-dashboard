@@ -1,53 +1,35 @@
-# First public release
+# Source preview releases
 
-See [the latest readiness review](release-readiness.md) for validation and remaining limits.
+Orbit is maintained in the existing public [GitHub repository](https://github.com/morja/orbit-dashboard).
+The retired private development history must remain private. Do not initialize fresh
+history for subsequent public releases or publish a local checkout containing runtime data.
 
-## First preview
+## Prepare
 
-Public repository: [morja/orbit-dashboard](https://github.com/morja/orbit-dashboard).
-The first source prerelease is `v0.1.0-preview.1`. Fresh history, clean exports and
-local verification are complete. The second-Mac setup rehearsal remains open.
-The steps below also apply when preparing later candidates.
+1. Choose the next preview version and update the README download links.
+2. Describe behavior changes, verification and remaining limits in release notes.
+3. Regenerate README screenshots with `scripts/capture-screenshots.cjs` when the UI
+   changes, using only the synthetic fixture. Inspect them before committing.
+4. Use Conventional Commits, including `chore(release): prepare <version>`.
+5. Export committed source outside the checkout with `scripts/export-public.py`.
+   The exporter rejects tracked personal configuration, keys, logs and databases.
+   Review the exact archive; never add `data/`, `AGENTS.local.md`, `.git`, editor
+   configuration or private project screenshots to a release.
 
-## Prepared
+## Verify the exact export
 
-- MIT license, English documentation and optional German interface.
-- Generic settings, optional tools and explicitly enabled SSH collection.
-- AI setup guide and a copyable setup prompt in the README.
-- Synthetic screenshots and tests; local settings, keys and databases excluded.
-- Website link overrides belong to per-server settings. No personal domain behavior.
+- Run `python3 -m unittest discover -s tests`, `npm run check` and `npm run test:browser`.
+- Review public docs and synthetic screenshots. Preserve known compatibility limits.
+- If native code or lifecycle behavior changes, build an isolated app from the export
+  with `macos/build.py --output` and run `tests/native.py --app` against it. Close the
+  installed app first and use synthetic settings; do not replace personal data.
+- A second-Mac setup rehearsal, minimum-version testing and missing-prerequisite
+  installation remain separate compatibility checks. Do not claim them without evidence.
 
-## Before going live
+## Publish
 
-- Verify the native install and AI setup workflow on a second Mac, including missing
-  tools, reopening and backend shutdown. Record macOS/Python versions tested.
-- Export committed source with `python3 scripts/export-public.py /path/to/new/folder`.
-  The exporter rejects tracked local artifacts and never copies history. Do not copy `.git`, local data,
-  `config.json`, `AGENTS.local.md`, editor settings or screenshots of real projects.
-- Review the exact export for personal content and credentials. The private GitLab
-  history contains old personal configuration and must remain private.
-- Initialize fresh Git history and create the public GitHub repository only when
-  the user chooses to go live. Add its actual URL and source download instructions.
-- Run Python, frontend and browser checks from that exact export.
-- Regenerate and inspect screenshots if the visible interface has changed.
-- Tag the first developer preview and state the source/Python requirement clearly.
-
-The private GitLab repository remains the development archive. Do not rewrite or
-publish its history. A bundled Python runtime, signing, notarization and updates
-are separate distribution work, not prerequisites for a source preview.
-
-## Preparing a candidate
-
-Use a new folder outside the development checkout. An existing destination is
-never overwritten. Commit tracked changes first; ignored local data does not enter
-the export. Run the documented checks from that folder. Build an isolated native
-app with `python3 macos/build.py --output /path/to/Orbit-preview.app` and test with
-`python3 tests/native.py --app /path/to/Orbit-preview.app`. Close other Orbit
-instances first because the native app uses port 8765. Use synthetic project
-settings for this check, then remove the test data before preparing Git.
-
-After reviewing the exact candidate, initialize Git locally with a new root commit.
-Do not copy `.git`, add a GitLab remote, or push the private development branch.
-The new repository must have exactly one root commit and no remote until public
-publication is explicitly requested. Adding the GitHub URL and tagging the public
-preview happens at publication time.
+Package the clean source export into a versioned ZIP and provide `SHA256SUMS.txt`.
+Push the release commit, tag its exact revision and create a GitHub prerelease with
+those assets. Verify the published tag and assets after upload. Releases remain
+macOS source distributions requiring Python 3.10+ and Apple Command Line Tools
+for the native window, not standalone signed or notarized applications.

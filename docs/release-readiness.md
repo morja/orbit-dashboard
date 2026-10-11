@@ -78,3 +78,18 @@ isolated app identity and the virtual environment's interpreter.
 This is a clean local setup rehearsal, not a second-Mac or clean macOS installation.
 Python and Apple developer tools were already installed. Missing-prerequisite
 installation and compatibility with the minimum Python version remain unverified.
+
+## Developer Preview 3
+
+Prepared on 11 October 2026 from the maintained public checkout. This preview adds
+Local Services, the shared Git status window, mini previews and shared typography.
+All four public README screenshots were regenerated from synthetic fixture data;
+the light/dark overview images were visually reviewed. Conventional Commits are
+now documented in AGENTS.md and CONTRIBUTING.md. Existing Git history is preserved.
+
+The release checklist now describes subsequent releases from the public repository
+rather than repeating the first-publication history reset. The source ZIP is built
+from a clean committed export; run Python, frontend and browser checks against that
+exact export before publishing. Native code is unchanged from Preview 2, so this
+release retains its native-lifecycle evidence and compatibility limits rather than
+claiming another native build or a second-Mac rehearsal.
