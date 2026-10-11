@@ -46,3 +46,8 @@ retrofit this convention. See CONTRIBUTING.md for examples.
 
 Frontend changes must follow docs/ui-style.md and reuse shared typography tokens
 and components for equivalent elements across views.
+
+Automatic release notes must describe user-visible changes. For technical commit
+subjects, add a single-line `Release-Note: ...` footer; use `Release-Note: none`
+for internal work. Do not publish a release for each fix/feature commit. The
+manually started preview workflow runs checks and prepares a draft for review.

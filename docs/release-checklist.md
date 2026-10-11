@@ -33,3 +33,29 @@ Push the release commit, tag its exact revision and create a GitHub prerelease w
 those assets. Verify the published tag and assets after upload. Releases remain
 macOS source distributions requiring Python 3.10+ and Apple Command Line Tools
 for the native window, not standalone signed or notarized applications.
+
+## Automated preview drafts
+
+On GitHub, run **Actions → Prepare source preview → Run workflow** from `main`
+and supply a new `vX.Y.Z-preview.N` version. The workflow prepares a clean source
+ZIP, checksum and user-facing notes, tests that exact export, and creates a draft
+prerelease. It does not run on every push and does not publish the draft automatically.
+Review the notes and assets, then publish the draft when the version is ready.
+
+For a local notes preview:
+
+```sh
+python3 scripts/release_notes.py --version v0.1.0-preview.4
+```
+
+For local packaging, first commit the source and choose a fresh directory outside
+this checkout:
+
+```sh
+python3 scripts/prepare_release.py --version v0.1.0-preview.4 --output /tmp/orbit-release-candidate
+```
+
+The previous reachable version tag defines the change range. `Release-Note:`
+footers provide user-facing wording; `Release-Note: none` suppresses internal work.
+The workflow supports source previews only. A future standalone distribution needs
+its own tested packaging, signing and notarization steps before stable releases.

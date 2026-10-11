@@ -36,3 +36,20 @@ These conventions apply to new commits; published history is preserved.
 Use [the release checklist](docs/release-checklist.md) to prepare a clean source
 preview, validate its exact export and publish it to the existing public repository.
 Local maintainer instructions and runtime data must remain private.
+
+## User-facing release notes
+
+Automatic notes include `feat`, `fix` and `perf`, excluding tooling/build/CI scopes.
+Other commit types remain internal unless they carry an explicit user-facing note.
+Use a single-line footer when the commit subject is too technical:
+
+```text
+fix(ui): retain dialog bounds across panel updates
+
+Release-Note: The Git status window stays the same size when switching tabs.
+```
+
+`Release-Note: none` omits a change. A breaking commit must explain the user impact
+and migration in its note. Notes group changes into New, Fixed, Performance,
+Changed and Breaking changes, deduplicating identical descriptions. They never
+include a raw commit dump. Review the generated notes before publication.

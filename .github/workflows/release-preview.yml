@@ -1,0 +1,59 @@
+name: Prepare source preview
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'New preview version, for example v0.1.0-preview.4'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: orbit-preview-release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: github.ref == 'refs/heads/main'
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    env:
+      RELEASE_VERSION: ${{ inputs.version }}
+      RELEASE_DIRECTORY: ${{ runner.temp }}/orbit-release
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Prepare clean source and notes
+        run: python3 scripts/prepare_release.py --version "$RELEASE_VERSION" --output "$RELEASE_DIRECTORY"
+      - name: Test the exact export
+        working-directory: ${{ runner.temp }}/orbit-release/source
+        run: |
+          python3 -m unittest discover -s tests
+          npm run check
+          npm install --ignore-scripts --no-package-lock
+          npx playwright install chromium
+          npm run test:browser
+      - name: Create reviewable release draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_REVISION: ${{ github.sha }}
+        run: |
+          gh release create "$RELEASE_VERSION" \
+            "$RELEASE_DIRECTORY/orbit-dashboard-$RELEASE_VERSION.zip" \
+            "$RELEASE_DIRECTORY/SHA256SUMS.txt" \
+            --target "$RELEASE_REVISION" --draft --prerelease \
+            --title "Orbit Dashboard $RELEASE_VERSION" \
+            --notes-file "$RELEASE_DIRECTORY/release-notes.md"
