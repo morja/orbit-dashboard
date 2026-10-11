@@ -30,6 +30,7 @@ export function applyAppearance(config) {
   applyReadability(preview ? { ...Object.fromEntries(['font_size', 'contrast', 'zoom'].map(key => [key, Number(field(key).value)])), density: field('density').value } : config);
   const serverLink = document.querySelector('nav [data-view="moon"]');
   serverLink.hidden = !config.moon_enabled;
+  document.querySelector('nav [data-view="goaccess"]').hidden = !config.goaccess?.enabled;
   document.getElementById('server-nav-label').textContent = t('Servers');
   document.querySelector('nav [data-view="services"]').hidden = !config.services_enabled;
   document.querySelector('nav [data-view="docker"]').hidden = !config.docker_enabled && !config.ddev_enabled;

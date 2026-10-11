@@ -22,6 +22,7 @@
       <a href="#servers" data-view="moon" aria-label="Servers"><span data-icon="server"></span><span id="server-nav-label">Servers</span></a>
       <a href="#docker" data-view="docker" aria-label="Docker & DDEV"><span data-icon="cube"></span>Docker &amp; DDEV</a>
       <a href="#services" data-view="services" aria-label="Local services"><span data-icon="services"></span>Local services</a>
+      <a href="#goaccess" data-view="goaccess" aria-label="Web traffic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M6 16V9m6 7V4m6 12v-5"/></svg>Web traffic</a>
       <a href="#storage" data-view="storage" aria-label="Storage"><span data-icon="disk"></span>Storage</a>
     </nav>
     <div class="sidebar-note"><div class="mini-orbit"></div><p>Everything in one place.</p><span>Your Mac. Your projects.<br>Your next step.</span></div>
@@ -169,6 +170,7 @@
         <div class="settings-panel" id="settings-panel-tools" role="tabpanel" aria-labelledby="settings-tab-tools" tabindex="0" hidden>
           <section class="settings-section">
             <h3>Tools</h3>
+            <button type="button" class="button secondary" id="configure-goaccess">GoAccess integration</button>
             <label class="settings-toggle"><input type="checkbox" id="setting-services_enabled">Check local background services</label>
             <label class="settings-toggle"><input type="checkbox" id="setting-ddev_enabled">Check DDEV projects</label>
             <label class="settings-toggle"><input type="checkbox" id="setting-docker_enabled">Check Docker and Colima</label>

@@ -1,3 +1,4 @@
+import { bindGoAccess } from './views/goaccess.js';
 import { bindGitMiniPreviews } from './git-mini-preview.js';
 import { bindCommitHistory } from './commit-history.js';
 /*
@@ -28,6 +29,7 @@ onLanguageChange(updateClock);
 updateClock();
 setInterval(updateClock, 60000);
 
+bindGoAccess(render);
 bindPathLayout();
 bindProjectEvents();
 bindDockerEvents(render);

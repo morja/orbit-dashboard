@@ -1,4 +1,5 @@
 /* Drawing the current view from the last state, and switching views by address. */
+import { goaccessView, loadGoAccess } from './views/goaccess.js';
 import { stale } from './format.js';
 import { escape } from './html.js';
 import { systemMessage, t } from './i18n.js';
@@ -15,6 +16,7 @@ import { serverView } from './views/server.js';
 import { storageView } from './views/storage.js';
 
 const views = {
+  goaccess: goaccessView,
   services: servicesView,
   overview: overviewView,
   projects: projectSection,
@@ -24,7 +26,7 @@ const views = {
 };
 
 function viewName(view) {
-  return { services: t('Local services'), overview: t('Overview'), projects: t('Projects'), moon: t('Servers'), docker: 'Docker & DDEV', storage: t('Storage') }[view];
+  return { goaccess: t('Web traffic'), services: t('Local services'), overview: t('Overview'), projects: t('Projects'), moon: t('Servers'), docker: 'Docker & DDEV', storage: t('Storage') }[view];
 }
 
 // Every view uses the same compact header and keeps the live status beside Refresh.
@@ -49,8 +51,9 @@ function notices() {
 }
 
 let renderedRoute;
+let renderedLanguage;
 
-export function render() {
+export function render({ force = false } = {}) {
   const data = store.data;
   if (!data) return;
   syncListPreferences(data.config || {});
@@ -59,6 +62,8 @@ export function render() {
   const position = {top: window.scrollY, left: window.scrollX};
   const tablePositions = [...document.querySelectorAll('#content .table-wrap')].map(node => ({left: node.scrollLeft, top: node.scrollTop}));
   if (data.config) applyAppearance(data.config);
+  // Preserve the interactive report and its scroll position during polling.
+  if (sameView && store.view === 'goaccess' && !force && renderedLanguage === data.config?.language) return;
   const content = document.getElementById('content');
   const focus = document.activeElement;
   // Redrawing would close an open select in the content.
@@ -92,6 +97,7 @@ export function render() {
   const target = sameView ? position : {top: 0, left: 0};
   window.scrollTo({...target, behavior: 'instant'});
   renderedRoute = route;
+  renderedLanguage = data.config?.language;
 }
 
 export function navigate() {
@@ -100,4 +106,5 @@ export function navigate() {
   store.selectedServer = new URLSearchParams(query).get('server');
   store.view = Object.hasOwn(views, requested) ? requested : 'overview';
   render();
+  if (store.view === 'goaccess') loadGoAccess();
 }

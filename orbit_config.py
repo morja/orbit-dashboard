@@ -17,7 +17,7 @@ PALETTES = ['orbit', 'ocean', 'sand', 'lavender', 'graphite']
 
 
 def defaults():
-    return {'version': 1, 'sources': [], 'servers': [], 'category_order': [], 'scan_depth': 6, 'excluded_dirs': EXCLUDED.copy(),
+    return {'version': 1, 'goaccess': {'enabled': False, 'host': '', 'command': ''}, 'sources': [], 'servers': [], 'category_order': [], 'scan_depth': 6, 'excluded_dirs': EXCLUDED.copy(),
             'moon_enabled': False, 'moon_host': '', 'moon_command': 'moon-status', 'moon_label': 'Server',
             'services_enabled': False, 'service_preferences': {}, 'ddev_enabled': False, 'docker_enabled': False, 'terminal': 'auto', 'editor': 'none',
             'intervals': INTERVALS.copy(), 'ui_refresh': 10, 'theme': 'system', 'palette': 'orbit', 'language': 'en',
@@ -37,6 +37,22 @@ def validate(data):
     result.update(copy.deepcopy(data))
     if type(result['version']) is not int or result['version'] != 1:
         raise ValueError('Unsupported configuration version')
+    integration = result['goaccess']
+    if not isinstance(integration, dict) or set(integration) - {'enabled', 'host', 'command'}:
+        raise ValueError('Invalid GoAccess settings')
+    integration = {'enabled': False, 'host': '', 'command': '', **integration}
+    if type(integration['enabled']) is not bool:
+        raise ValueError('GoAccess enabled must be a boolean')
+    integration['host'] = text(integration['host'], 'SSH alias', 200)
+    integration['command'] = text(integration['command'], 'GoAccess export command', 4096)
+    if integration['host'] and (not re.fullmatch(r'[a-zA-Z0-9_.-]+', integration['host']) or integration['host'].startswith('-')):
+        raise ValueError('Invalid SSH alias')
+    if integration['command'] and (not re.fullmatch(r'[a-zA-Z0-9_./-]+', integration['command']) or integration['command'].startswith('-')):
+        raise ValueError('GoAccess export command must be a single executable')
+    if integration['enabled'] and not all(integration[key] for key in ('host', 'command')):
+        raise ValueError('Provide an SSH alias and export command for GoAccess')
+    result['goaccess'] = integration
+
     sources = result['sources']
     if not isinstance(sources, list) or len(sources) > 100:
         raise ValueError('A maximum of 100 project folders is supported')

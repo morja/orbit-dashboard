@@ -8,6 +8,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 import local_services
+from goaccess_integration import GoAccessCache
 import argparse
 import copy
 import hashlib
@@ -405,6 +406,7 @@ class Dashboard:
         self.mac = None
         self.moon = store.cached("moon:" + self.config["moon_host"] + ":" + self.config["moon_command"]) or (store.cached("moon") if self.config["moon_label"] == "Moon" else None)
         self.probe_attempts = {}
+        self.goaccess = GoAccessCache(store.directory)
         self.servers = {self.server_key(item): store.cached(self.server_key(item)) for item in self.config['servers']}
         self.ddev = {"projects": [], "checked_at": None, "error": None}
         self.docker = {"checked_at": None, "status": "unknown", "colima_status": "unknown", "errors": [], "usage": []}
@@ -794,7 +796,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("Referrer-Policy", "no-referrer")
-        self.send_header("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
+        if "Content-Security-Policy" not in (headers or {}):
+            self.send_header("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
         self.end_headers()
         self.wfile.write(body)
 
@@ -802,6 +805,17 @@ class Handler(BaseHTTPRequestHandler):
         if not self.allowed():
             return self.send({"error": "Access is restricted to this computer"}, 403)
         path = urlparse(self.path).path
+        if path == "/api/goaccess":
+            return self.send(self.server.dashboard.goaccess.read())
+        report = re.fullmatch(r"/api/goaccess/reports/([a-z0-9-]+)", path)
+        if report:
+            body = self.server.dashboard.goaccess.report(report[1])
+            if body is None:
+                return self.send({'error': 'Report not found'}, 404)
+            # GoAccess compiles its own templates. Evaluation is permitted only
+            # in this sandboxed report, never in Orbit's document.
+            return self.send(body, mime='text/html; charset=utf-8', headers={
+                'Content-Security-Policy': "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; style-src 'unsafe-inline'; img-src data:; font-src data:; frame-ancestors 'self'; sandbox allow-scripts; base-uri 'none'; form-action 'none'"})
         if path == "/api/state":
             # The dashboard asks with its last ETag and redraws only when the state changed.
             snapshot = self.server.dashboard.snapshot()
@@ -847,6 +861,11 @@ class Handler(BaseHTTPRequestHandler):
             data = json.loads(self.rfile.read(length))
             path = urlparse(self.path).path
             dashboard = self.server.dashboard
+            if path == "/api/goaccess/refresh":
+                try:
+                    return self.send(dashboard.goaccess.refresh(copy.deepcopy(dashboard.config['goaccess'])))
+                except ValueError as error:
+                    return self.send({'error': str(error)}, 503)
             if path == "/api/settings":
                 return self.send(dashboard.update_config(data))
             match_service = re.fullmatch(r"/api/services/([a-f0-9]{20})", path)

@@ -6,7 +6,7 @@
   "license": "MIT",
   "scripts": {
     "check": "node scripts/check-js.mjs",
-    "test:browser": "node tests/browser.cjs && node tests/settings-browser.cjs"
+    "test:browser": "node tests/browser.cjs && node tests/settings-browser.cjs && node tests/goaccess-browser.cjs"
   },
   "devDependencies": {
     "playwright": "1.64.0"
