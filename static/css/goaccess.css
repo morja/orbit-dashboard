@@ -1,15 +1,54 @@
 /* Reuse Orbit's panels, typography and light/dark tokens. */
-.goaccess-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 8px; margin-block: 10px; }
-#content .goaccess-card { text-align: left; color: var(--text); cursor: pointer; padding: 12px; display: grid; align-content: start; min-width: 0; }
-.goaccess-card h2 { font-size: var(--font-card-title); margin: 0; }
-.goaccess-hostname { font-size: var(--font-secondary); margin: 2px 0 0; overflow-wrap: anywhere; }
-.goaccess-card > p:last-child { font-size: var(--font-caption); margin: 0; }
+.goaccess-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-block: 10px;
+}
+
+#content .goaccess-card {
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+  padding: 10px;
+  line-height: 1.35;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  min-width: 0;
+}
+
+.goaccess-card h2 {
+  font-size: var(--font-card-title);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.goaccess-hostname {
+  font-size: var(--font-secondary);
+  margin: 2px 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .goaccess-card[aria-pressed="true"] { outline: 2px solid var(--green); }
-.goaccess-card dl { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-block: 8px; }
-.goaccess-card dt { font-size: var(--font-secondary); color: var(--muted); }
-.goaccess-card dd { margin: 2px 0 0; font-size: var(--font-card-title); font-weight: 550; }
-#content .goaccess-toolbar { padding: 10px 12px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; }
-.goaccess-toolbar > p { margin: 0; font-size: var(--font-caption); }
-.goaccess-toolbar > .notice { flex-basis: 100%; }
-.goaccess-toolbar > .button { padding: 6px 10px; font-size: var(--font-secondary); }
+.goaccess-card dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-block: 8px; }
+.goaccess-card dt { white-space: nowrap; font-size: var(--font-secondary); color: var(--muted); }
+.goaccess-card dd { margin: 2px 0 0; font-size: var(--font-card-title); font-weight: 550; font-variant-numeric: tabular-nums; }
+.goaccess-card-footer { font-size: var(--font-caption); margin: 0; align-self: end; min-height: 1.35em; }
+
+#content .goaccess-toolbar { padding: 8px 10px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; }
+.goaccess-toolbar > .notice { flex-basis: 100%; margin: 0; }
+.goaccess-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.goaccess-actions > .button { padding: 6px 10px; font-size: var(--font-secondary); }
+.goaccess-period { display: flex; align-items: center; gap: 8px; font-size: var(--font-secondary); }
+.goaccess-period select { width: auto; padding: 5px 8px; font: inherit; color: var(--text); background: var(--paper); border: 1px solid var(--line); border-radius: calc(var(--radius) / 2); }
+.goaccess-footnote { margin-block: 12px; }
+.goaccess-footnote p { margin: 3px 0; font-size: var(--font-caption); }
 .goaccess-report { width: 100%; min-height: 75vh; border: 0; background: white; }
+
+@media (max-width: 1280px) { .goaccess-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 1000px) { .goaccess-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .goaccess-grid { grid-template-columns: 1fr; } }

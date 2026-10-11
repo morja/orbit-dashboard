@@ -47,6 +47,29 @@ class GoAccessTests(unittest.TestCase):
                     cache.refresh(self.config())
             self.assertEqual(before, (Path(directory) / 'goaccess/summary.json').read_bytes())
 
+    def test_period_reports_are_validated_and_selected(self):
+        payload = self.payload()
+        report = payload['reports'][0]
+        report['periods'] = {key: {'summary': {'requests': number, 'visitors': 1, 'bandwidth': 10},
+            'startDate': '2026-10-01', 'endDate': '2026-10-11',
+            'html': base64.b64encode(('period-' + key).encode()).decode()}
+            for key, number in [('7', 7), ('30', 30), ('all', 100)]}
+        with tempfile.TemporaryDirectory() as directory:
+            cache = GoAccessCache(directory)
+            with patch('goaccess_integration.subprocess.run', return_value=SimpleNamespace(returncode=0, stdout=json.dumps(payload).encode())):
+                data = cache.refresh(self.config())
+            self.assertEqual(data['reports'][0]['periods']['30']['summary']['requests'], 30)
+            self.assertEqual(cache.report('site', '7'), b'period-7')
+            self.assertEqual(cache.report('site', 'all'), b'period-all')
+            self.assertIsNone(cache.report('site', '../outside'))
+            before = cache.read()
+            cache.last_attempt.clear()
+            report['periods']['7']['startDate'] = 'invalid'
+            with patch('goaccess_integration.subprocess.run', return_value=SimpleNamespace(returncode=0, stdout=json.dumps(payload).encode())):
+                with self.assertRaises(ValueError):
+                    cache.refresh(self.config())
+            self.assertEqual(cache.read(), before)
+
     def test_disabled_never_connects_and_repeated_download_is_limited(self):
         with tempfile.TemporaryDirectory() as directory:
             cache = GoAccessCache(directory)

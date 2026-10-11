@@ -3,6 +3,15 @@
  * filled at runtime. Plural forms use the categories of Intl.PluralRules.
  */
 export default {
+  "Visitors": "Besucher",
+  "Awaiting data": "Warten auf Daten",
+  "Period": "Zeitraum",
+  "Last 7 days": "Letzte 7 Tage",
+  "Last 30 days": "Letzte 30 Tage",
+  "All available history": "Gesamter Verlauf",
+  "Available data": "Vorhandene Daten",
+  "Load reports to enable date ranges.": "Berichte laden, um Zeiträume auszuwählen.",
+  "No requests in this period.": "Keine Anfragen in diesem Zeitraum.",
   "Web traffic": "Webanfragen",
   "GoAccess integration": "GoAccess-Integration",
   "Enable GoAccess": "GoAccess aktivieren",
@@ -16,8 +25,7 @@ export default {
   "Local copy": "Lokale Kopie",
   "GoAccess prepares reports on your server. Orbit only downloads them over SSH.": "GoAccess erstellt die Berichte auf deinem Server. Orbit lädt sie ausschließlich per SSH herunter.",
   "Configure an SSH alias and a read-only export executable. No server changes are made by Orbit.": "Konfiguriere einen SSH-Alias und einen lesenden Export-Befehl. Orbit verändert nichts auf dem Server.",
-  "Reports cover imported logs, with up to one year of history. Visitor counts are estimates; requests include assets, bots and APIs.": "Die Berichte umfassen importierte Logs mit bis zu einem Jahr Historie. Besucherzahlen sind Schätzungen; Anfragen enthalten auch Dateien, Bots und APIs.",
-  "Waiting for dedicated logs": "Warten auf getrennte Logs",
+  "Counts use the selected period. Current unrotated logs are excluded; visitors are daily estimates including bots.": "Die Zahlen gelten für den gewählten Zeitraum. Laufende Logs fehlen noch; Besucher sind tägliche Schätzungen einschließlich Bots.",
 
   'Clean': 'Keine Änderungen',
   'Git status': 'Git-Status',

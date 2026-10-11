@@ -13,7 +13,7 @@ status, optional hostname, summary with nonnegative requests/visitors/bandwidth 
 optional html containing a base64-encoded self-contained GoAccess HTML report.
 Use the same id to replace a report. Visitors are estimates, not exact people.
 The Moon preparation imports completed rotations, so reports exclude the current
-log until its next rotation. GoAccess history is retained for 365 days.
+log until its next rotation. GoAccess retains up to 365 recorded dates, which can span longer when days have no requests.
 
 Orbit caches downloads privately in data/goaccess. A failed import preserves the
 previous manifest. The report iframe uses an opaque origin, permits scripts only,
@@ -32,3 +32,18 @@ needed. Existing Orbit collectors and the Moon status command are unchanged.
 
 Before changing a server's log format or resetting its GoAccess database, back
 up the prepared data and document the effect on historical comparisons.
+
+
+The Web traffic view defaults to the last 30 calendar days, with 7 days and all
+retained history available. Server exports can include periods keyed by "7", "30"
+and "all", each with its own summary, startDate/endDate, dataStart/dataEnd and
+optional base64 HTML. Counts in the cards and the detailed report use the same
+window. Missing dates are not extended backwards to fill the period; older exports
+remain available under All until the next download. Current unrotated logs remain
+excluded. Visitor counts sum GoAccess's daily estimates, not unique people across
+the entire period.
+
+The report renderer preserves the isolated iframe and GoAccess controls. It uses
+GoAccess's built-in bright/darkGray themes, full-width panels, 10 rows per page,
+visible tables on small screens, readable typography and an inline stylesheet
+from static/css/goaccess-report.css. No external theme assets are fetched.

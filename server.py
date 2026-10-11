@@ -6,9 +6,9 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 import local_services
-from goaccess_integration import GoAccessCache
+from goaccess_integration import GoAccessCache, readable_report
 import argparse
 import copy
 import hashlib
@@ -809,11 +809,13 @@ class Handler(BaseHTTPRequestHandler):
             return self.send(self.server.dashboard.goaccess.read())
         report = re.fullmatch(r"/api/goaccess/reports/([a-z0-9-]+)", path)
         if report:
-            body = self.server.dashboard.goaccess.report(report[1])
+            query = parse_qs(urlparse(self.path).query)
+            body = self.server.dashboard.goaccess.report(report[1], query.get('period', ['all'])[0])
             if body is None:
                 return self.send({'error': 'Report not found'}, 404)
             # GoAccess compiles its own templates. Evaluation is permitted only
             # in this sandboxed report, never in Orbit's document.
+            body = readable_report(body, query.get('theme', ['light'])[0])
             return self.send(body, mime='text/html; charset=utf-8', headers={
                 'Content-Security-Policy': "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; style-src 'unsafe-inline'; img-src data:; font-src data:; frame-ancestors 'self'; sandbox allow-scripts; base-uri 'none'; form-action 'none'"})
         if path == "/api/state":

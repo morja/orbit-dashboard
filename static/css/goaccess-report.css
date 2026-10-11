@@ -1,0 +1,42 @@
+/* Readable GoAccess reports, scoped to the sandboxed report document. */
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 14px; line-height: 1.5; }
+.container, .container-fluid { width: calc(100% - 64px); max-width: 1440px; margin-left: 64px; margin-right: 0; padding: 20px 24px; }
+.wrap-panel { width: 100%; }
+[id^="panel-"] { border-radius: 10px; padding: 18px; margin-bottom: 20px; }
+h1 { font-size: 26px; letter-spacing: -.5px; }
+h2 { font-size: 19px; line-height: 1.4; text-transform: none; }
+.gheader { font-size: 19px; line-height: 1.4; text-transform: none; }
+.gheader small { display: block; margin-top: 4px; font-size: 12px; line-height: 1.5; text-transform: none; }
+.table { font-size: 13px; }
+.table > tbody > tr > td, .table > thead > tr > th, .table > tfoot > tr > td { padding: 10px 12px; line-height: 1.5; }
+.table th { font-size: 12px; text-transform: none; white-space: nowrap; }
+.table td { font-variant-numeric: tabular-nums; }
+.table td:last-child { white-space: normal; overflow-wrap: anywhere; min-width: 160px; }
+.table-wrapper { display: block !important; }
+.table-responsive { overflow-x: auto; }
+svg text { font-size: 12px; }
+.panel small, .panel .small { font-size: 12px; }
+html.dark body { color: #e4ebef; background: #15202b; }
+html.dark [id^="panel-"] { background: #1c2b37; border-color: #3b4d5c; }
+html.dark .table { color: #e4ebef; }
+/* Parsing counters are lifetime metadata, not statistics for a selected window. */
+.wrap-general-items { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-block: 14px 24px; }
+.wrap-general-items > .row { display: contents; }
+.wrap-general-items .col-md-2 { width: auto; padding: 0; float: none; }
+.wrap-general-items > .row > div:has(#failed_requests, #valid_requests, #generation_time, #excluded_hits, #log_size, #unique_referrers) { display: none; }
+.grid-module { padding: 12px; border-radius: 6px; }
+@media (max-width: 600px) {
+  [id^="panel-"] { padding: 12px; }
+  .container, .container-fluid { padding-inline: 16px; }
+  .wrap-general-items { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .table > tbody > tr > td, .table > thead > tr > th { padding: 8px; }
+}
+
+/* Bootstrap row pseudo-elements must not become empty cells in the summary grid. */
+.wrap-general-items > .row::before, .wrap-general-items > .row::after { display: none; content: none; }
+.wrap-general-items .col-md-2 { min-width: 0; clear: none; }
+html.dark.gray body { color: #e4ebef; background: #15202b; }
+html.dark.gray [id^="panel-"] { background: #1c2b37; border-color: #3b4d5c; }
+html.dark.gray .gheader, html.dark.gray .gheader small, html.dark.gray h1, html.dark.gray h3 { color: #e4ebef; }
+html.dark.gray .table { color: #e4ebef; }
+html.dark.gray .grid-module { background: #1c2b37; }
