@@ -141,7 +141,20 @@ def git_status(path):
     behind = ahead = None
     if tracking_code == 0 and len(tracking.split()) == 2:
         behind, ahead = map(int, tracking.split())
-    return {"available": True, "status": "dirty" if counts["changed"] else "clean", "branch": branch.strip() or "Noch kein Commit", "last_commit": int(activity.strip()) if activity.strip().isdigit() else None, "ahead": ahead, "behind": behind, "files": files, "files_remaining": max(0, counts["changed"] - len(files)), **counts}
+
+    # A remote can exist without tracking; a configured upstream may be missing locally.
+    remotes, remote_code = git("remote")
+    upstream, upstream_code = git("for-each-ref", "--format=%(upstream:short)", f"refs/heads/{branch.strip()}")
+    return {
+        "available": True, "status": "dirty" if counts["changed"] else "clean",
+        "branch": branch.strip() or "Noch kein Commit",
+        "last_commit": int(activity.strip()) if activity.strip().isdigit() else None,
+        "ahead": ahead, "behind": behind,
+        "has_remote": bool(remotes.strip()) if remote_code == 0 else None,
+        "upstream": upstream.strip() if upstream_code == 0 else None,
+        "files": files, "files_remaining": max(0, counts["changed"] - len(files)),
+        **counts,
+    }
 
 
 def open_cmux(project):
@@ -432,7 +445,11 @@ class Dashboard:
     def update_config(self, data):
         with self.lock:
             previous = self.config
+            previous_scope = self.project_scope()
             self.config = self.settings.save(data)
+            if self.project_scope() != previous_scope:
+                # Warnings from the old folder list no longer describe this configuration.
+                self.project_errors = []
             if (previous["moon_host"], previous["moon_command"]) != (self.config["moon_host"], self.config["moon_command"]):
                 self.moon = self.store.cached("moon:" + self.config["moon_host"] + ":" + self.config["moon_command"])
             self.servers = {self.server_key(item): self.servers.get(self.server_key(item)) or self.store.cached(self.server_key(item)) for item in self.config['servers']}

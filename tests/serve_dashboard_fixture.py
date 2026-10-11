@@ -14,11 +14,11 @@ from test_server import MOON
 
 PROJECTS = {
     'Projects/alpha-app': {'changed': 3, 'modified': 1760000000},
-    'Projects/beta-site': {'ahead': 2, 'modified': 1759900000},
+    'Projects/beta-site': {'ahead': 2, 'behind': 1, 'modified': 1759900000},
     'Projects/gamma-tool': {'modified': 1759800000},
-    'Clients/Acme/shop': {'changed': 1, 'modified': 1759700000},
-    'Clients/Acme/portal': {'ddev': True, 'modified': 1759600000},
-    'Clients/Globex/intranet': {'modified': 1759500000},
+    'Clients/Acme/shop': {'changed': 1, 'has_remote': False, 'upstream': '', 'modified': 1759700000},
+    'Clients/Acme/portal': {'ddev': True, 'comparison_unavailable': True, 'modified': 1759600000},
+    'Clients/Globex/intranet': {'upstream': '', 'modified': 1759500000},
     'Archive/old-site': {'modified': 1700000000},
     'Archive/legacy-api': {'modified': 1690000000},
 }
@@ -59,10 +59,14 @@ def main():
         def git_status(path):
             details = PROJECTS[str(Path(path).relative_to(work))]
             changed = details.get('changed', 0)
+            has_remote = details.get('has_remote', True)
+            upstream = details.get('upstream', 'origin/main')
+            comparable = bool(upstream) and not details.get('comparison_unavailable')
             files = [{'path': f'src/file-{index}.js', 'status': ' M'} for index in range(changed)]
             return {'available': True, 'status': 'dirty' if changed else 'clean', 'branch': 'main', 'changed': changed,
-                    'staged': 0, 'unstaged': changed, 'untracked': 0, 'conflicts': 0, 'ahead': details.get('ahead', 0),
-                    'behind': 0, 'files': files, 'last_commit': details['modified']}
+                    'staged': 0, 'unstaged': changed, 'untracked': 0, 'conflicts': 0,
+                    'has_remote': has_remote, 'upstream': upstream, 'ahead': details.get('ahead', 0) if comparable else None,
+                    'behind': details.get('behind', 0) if comparable else None, 'files': files, 'last_commit': details['modified']}
 
         server.command = command
         # Fixed machine values keep screenshots comparable between runs.

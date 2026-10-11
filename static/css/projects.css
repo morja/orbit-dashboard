@@ -350,9 +350,18 @@ th[aria-sort="descending"] {
   gap: 4px;
 }
 
-.branch svg {
+.branch svg, .remote-state svg {
   width: 11px;
   height: 11px;
+}
+
+.remote-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  color: var(--muted);
+  white-space: nowrap;
 }
 
 .modified-cell {

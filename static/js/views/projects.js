@@ -86,7 +86,35 @@ function branchLine(git) {
   if (!git.branch) return '';
   const ahead = git.ahead > 0 ? ` · ↑${git.ahead}` : '';
   const behind = git.behind > 0 ? ` · ↓${git.behind}` : '';
-  return `<div class="branch">${icon('branch')}${escape(git.branch)}${ahead}${behind}</div>`;
+  return `<div class="branch">${icon('branch')}${escape(git.branch)}${ahead}${behind}${remoteLine(git)}</div>`;
+}
+
+function remoteLine(git) {
+  if (!git.branch) return '';
+  let label;
+  let title;
+  let symbol = 'branch';
+
+  if (git.has_remote === false) {
+    label = t('No remote');
+    title = t('This repository has no configured remote.');
+    symbol = 'cloud-off';
+  } else if (git.has_remote === true && git.upstream === '') {
+    label = t('No tracking branch');
+    title = t('A remote exists, but this branch has no upstream.');
+  } else if (git.ahead === 0 && git.behind === 0) {
+    label = t('In sync');
+    title = t('Compared with the last locally known upstream state.');
+    symbol = 'check';
+  } else if (git.upstream && (git.ahead == null || git.behind == null)) {
+    label = t('Comparison unavailable');
+    title = t('The upstream is configured, but its commit difference cannot be read locally.');
+    symbol = 'alert';
+  } else {
+    return '';
+  }
+
+  return `<span class="remote-state" title="${escape(title)}">${icon(symbol)}${escape(label)}</span>`;
 }
 
 function sizeCell(size) {

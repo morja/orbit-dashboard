@@ -2,6 +2,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 import json
+import subprocess
 import sys
 import threading
 import unittest
@@ -38,6 +39,23 @@ ERGEBNIS
 
 
 class CollectorsTest(unittest.TestCase):
+    def test_removing_missing_source_clears_old_warning_before_rescan(self):
+        with TemporaryDirectory() as tmp:
+            dashboard = Dashboard(Store(Path(tmp) / 'data'), {"roots": [str(Path(tmp) / 'missing')]})
+            try:
+                with patch.object(dashboard, 'schedule'):
+                    dashboard.collect_projects()
+                    self.assertEqual(len(dashboard.snapshot()['project_errors']), 1)
+                    dashboard.update_config({**dashboard.config, 'theme': 'dark'})
+                    self.assertEqual(len(dashboard.snapshot()['project_errors']), 1)
+                    updated = {**dashboard.config, 'sources': []}
+                    dashboard.update_config(updated)
+                    self.assertEqual(dashboard.snapshot()['project_errors'], [])
+                    dashboard.collect_projects()
+                    self.assertEqual(dashboard.snapshot()['project_errors'], [])
+            finally:
+                dashboard.pool.shutdown()
+
     def test_docker_units_and_data_partition(self):
         self.assertEqual(docker_bytes("1.408GB (11%)"), 1408000000)
         self.assertEqual(docker_bytes("0B (0%)"), 0)
@@ -200,7 +218,7 @@ class CollectorsTest(unittest.TestCase):
     def test_git_rename_newline_filename_and_conflict_counts(self):
         with TemporaryDirectory() as tmp:
             (Path(tmp) / ".git").mkdir()
-            outputs = [("R  renamed\0old-name\0?? file\nname\0UU conflicted\0", 0), ("feature/test\n", 0), ("1234567890\n", 0), ("2\t3\n", 0)]
+            outputs = [("R  renamed\0old-name\0?? file\nname\0UU conflicted\0", 0), ("feature/test\n", 0), ("1234567890\n", 0), ("2\t3\n", 0), ("origin\n", 0), ("origin/main\n", 0)]
             with patch("server.command", side_effect=outputs):
                 result = git_status(tmp)
             self.assertEqual(result["changed"], 3)
@@ -219,11 +237,43 @@ class CollectorsTest(unittest.TestCase):
         with TemporaryDirectory() as tmp:
             (Path(tmp) / ".git").mkdir()
             output = "".join(f" M file-{n}.txt\0" for n in range(30))
-            with patch("server.command", side_effect=[(output, 0), ("main", 0), ("100", 0), ("0 0", 0)]):
+            with patch("server.command", side_effect=[(output, 0), ("main", 0), ("100", 0), ("0 0", 0), ("origin\n", 0), ("origin/main\n", 0)]):
                 result = git_status(tmp)
             self.assertEqual(len(result["files"]), 12)
             self.assertEqual(result["files_remaining"], 18)
             self.assertEqual(result["changed"], 30)
+
+    def test_git_remote_and_tracking_states(self):
+        with TemporaryDirectory() as tmp:
+            def git(*args):
+                subprocess.run(["git", "-C", tmp, *args], check=True, capture_output=True)
+
+            git("init", "-b", "main")
+            git("-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "--allow-empty", "-m", "Initial")
+            result = git_status(tmp)
+            self.assertFalse(result["has_remote"])
+            self.assertEqual(result["upstream"], "")
+            self.assertIsNone(result["ahead"])
+
+            git("remote", "add", "origin", "https://example.invalid/test.git")
+            result = git_status(tmp)
+            self.assertTrue(result["has_remote"])
+            self.assertEqual(result["upstream"], "")
+
+            git("update-ref", "refs/remotes/origin/main", "HEAD")
+            git("branch", "--set-upstream-to=origin/main")
+            result = git_status(tmp)
+            self.assertEqual(result["upstream"], "origin/main")
+            self.assertEqual((result["ahead"], result["behind"]), (0, 0))
+
+            # Tracking remains configured when the last known remote ref is missing.
+            git("update-ref", "-d", "refs/remotes/origin/main")
+            result = git_status(tmp)
+            self.assertEqual(result["upstream"], "origin/main")
+            self.assertIsNone(result["ahead"])
+
+            git("checkout", "--detach")
+            self.assertEqual(git_status(tmp)["upstream"], "")
 
     def test_cmux_reuses_workspace_without_sending_shell_commands(self):
         project = {"path": "/tmp/project", "id": "123", "name": "Project"}

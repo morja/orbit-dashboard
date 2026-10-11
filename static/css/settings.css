@@ -121,9 +121,21 @@
   margin-top: 0;
 }
 
-.source-heading .icon-button {
-  align-self: flex-end;
-  margin-bottom: 8px;
+.source-actions {
+  border-top: 1px solid var(--line);
+  margin-top: 16px;
+  padding-top: 12px;
+}
+
+.source-removal p {
+  margin: 0 0 12px;
+  color: var(--text);
+}
+
+.source-removal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .settings-source summary {

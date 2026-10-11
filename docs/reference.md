@@ -101,6 +101,9 @@ rm ~/Library/LaunchAgents/one.tearoom.orbit-dashboard.plist
 - Git branches, staged/unstaged/untracked entries, conflicts and local commits
   compared with the last locally known upstream state. Collectors never fetch,
   pull, commit or push.
+- The Git column distinguishes repositories without a remote, branches without
+  upstream tracking and branches in sync with the last locally known upstream.
+  A configured upstream whose difference cannot be read is marked unavailable.
 - Registered DDEV projects, running status and local website links. Unavailable
   status is shown as unknown rather than stopped.
 - Project status, priority and next-step notes in the local database.

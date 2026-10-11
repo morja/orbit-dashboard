@@ -93,7 +93,6 @@ export function sourceRow(source = {}) {
     </summary>
     <div class="source-heading">
       <label>${tHtml('Project folder')}<input data-source="path" required placeholder="~/Projects" value="${escape(source.path || '')}"></label>
-      <button type="button" class="icon-button remove-source" aria-label="${escape(t('Remove folder'))}">${icon('close')}</button>
     </div>
     <div class="form-row">
       <label>${tHtml('Category')}<input data-source="category" maxlength="80" value="${escape(source.category || t('Projects'))}"></label>
@@ -101,6 +100,16 @@ export function sourceRow(source = {}) {
     </div>
     <label class="settings-toggle"><input type="checkbox" data-source="archived" ${source.archived ? 'checked' : ''}>${tHtml('Archive projects here by default')}</label>
     <label class="settings-toggle"><input type="checkbox" data-source="plain_folders" ${source.plain_folders !== false ? 'checked' : ''}>${tHtml('Include direct folders without project files')}</label>
+    <div class="source-actions">
+      <button type="button" class="button secondary remove-source">${icon('close')}${tHtml('Remove project folder')}</button>
+      <div class="source-removal" role="group" aria-label="${escape(t('Remove project folder'))}" hidden>
+        <p>${tHtml('Remove this project folder from Orbit? Files on your Mac will stay untouched. The change takes effect when you save settings.')}</p>
+        <div class="source-removal-actions">
+          <button type="button" class="button secondary cancel-remove-source">${tHtml('Cancel')}</button>
+          <button type="button" class="button confirm-remove-source">${tHtml('Remove folder')}</button>
+        </div>
+      </div>
+    </div>
   `;
   document.getElementById('settings-sources').append(row);
 }
@@ -317,7 +326,24 @@ export function bindSettings() {
   dialog.addEventListener('click', (event) => {
     if (event.target.closest('.close-settings')) dialog.close();
     event.target.closest('.remove-server')?.closest('.settings-server').remove();
-    event.target.closest('.remove-source')?.closest('.settings-source').remove();
+    const source = event.target.closest('.settings-source');
+    if (source && event.target.closest('.remove-source')) {
+      source.querySelector('.remove-source').hidden = true;
+      source.querySelector('.source-removal').hidden = false;
+      source.querySelector('.cancel-remove-source').focus();
+    }
+    if (source && event.target.closest('.cancel-remove-source')) {
+      source.querySelector('.source-removal').hidden = true;
+      source.querySelector('.remove-source').hidden = false;
+      source.querySelector('.remove-source').focus();
+    }
+    if (source && event.target.closest('.confirm-remove-source')) {
+      const next = source.nextElementSibling?.querySelector('summary')
+        || source.previousElementSibling?.querySelector('summary')
+        || document.getElementById('add-source');
+      source.remove();
+      next.focus();
+    }
   });
   // Closing without saving restores the saved appearance.
   dialog.addEventListener('close', () => {

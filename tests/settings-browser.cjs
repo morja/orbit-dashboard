@@ -68,6 +68,45 @@ const assert = require('node:assert/strict');
     const footerFits = await page.locator('#save-settings').evaluate((el) => { const button = el.getBoundingClientRect(); const dialog = el.closest('dialog').getBoundingClientRect(); return button.bottom <= dialog.bottom && button.top >= dialog.top; });
     assert(footerFits, 'Save button must stay completely visible');
     await page.screenshot({ path: path.join(os.tmpdir(), 'orbit-settings-dark.png') });
+    // Removing a source requires confirmation and only changes the settings draft.
+    const beforeRemoval = await (await page.request.get(ready.url + '/api/settings')).json();
+    for (const language of ['en', 'de']) {
+      for (const theme of ['light', 'dark']) {
+        for (const width of [1440, 390]) {
+          await page.setViewportSize({width, height: 1100});
+          await selectTab('appearance');
+          await page.locator('#setting-language').selectOption(language);
+          await page.locator('#setting-theme').selectOption(theme);
+          await selectTab('projects');
+          await page.evaluate(async ({folder, language}) => {
+            (await import('/js/i18n.js')).setLanguage(language);
+            (await import('/js/settings.js')).sourceRow({path: folder, category: 'Removal test'});
+          }, {folder: ready.projects, language});
+          const source = page.locator('.settings-source').last();
+          await source.locator('summary').click();
+          assert.equal(await source.locator('.remove-source').innerText(), language === 'en' ? 'Remove project folder' : 'Projektordner entfernen');
+          await source.locator('.remove-source').click();
+          assert.equal(await page.locator('.settings-source').count(), 2);
+          assert.match(await source.locator('.source-removal').innerText(), language === 'en' ? /Files on your Mac will stay untouched/ : /Dateien auf deinem Mac bleiben erhalten/);
+          assert(await source.locator('.cancel-remove-source').evaluate(el => el === document.activeElement));
+          assert(await source.evaluate(el => el.scrollWidth <= el.clientWidth + 1));
+          await source.locator('.cancel-remove-source').click();
+          assert(await source.locator('.remove-source').isVisible());
+          assert.equal(await page.locator('.settings-source').count(), 2);
+          await source.locator('.remove-source').click();
+          if (language === 'de' && theme === 'light' && width === 390) {
+            await page.screenshot({path: path.join(os.tmpdir(), 'orbit-remove-folder-confirmation.png')});
+          }
+          await source.locator('.confirm-remove-source').click();
+          assert.equal(await page.locator('.settings-source').count(), 1);
+          assert.deepEqual(await (await page.request.get(ready.url + '/api/settings')).json(), beforeRemoval);
+        }
+      }
+    }
+    await page.setViewportSize({width: 1440, height: 1100});
+    await selectTab('appearance');
+    await page.locator('#setting-language').selectOption('en');
+    await page.locator('#setting-theme').selectOption('dark');
     // Invalid remote commands remain editable and do not overwrite saved settings.
     await selectTab('server');
     await page.locator('#add-server').click();
@@ -380,6 +419,33 @@ const assert = require('node:assert/strict');
     await page.locator('#reset-readability').click();
     await page.locator('#save-settings').click();
     await page.waitForSelector('#settings-dialog',{state:'hidden'});
+    // A saved missing folder shows a warning; removing and saving clears it after reload too.
+    const missingFolder = ready.projects + '/missing-folder';
+    await page.locator('#settings-topbar').click();
+    await page.waitForSelector('#settings-dialog[open]');
+    await selectTab('projects');
+    await page.locator('#add-source').click();
+    await page.locator('[data-source="path"]').last().fill(missingFolder);
+    await page.locator('#save-settings').click();
+    await page.waitForSelector('#settings-dialog',{state:'hidden'});
+    const missingWarning = page.getByText('Project folder is unavailable: ' + missingFolder, {exact:true});
+    await missingWarning.waitFor();
+    await page.locator('#settings-topbar').click();
+    await page.waitForSelector('#settings-dialog[open]');
+    await selectTab('projects');
+    const missingSource = page.locator('#settings-sources .settings-source').last();
+    await missingSource.locator('summary').click();
+    await missingSource.locator('.remove-source').click();
+    await missingSource.locator('.confirm-remove-source').click();
+    assert((await (await page.request.get(ready.url + '/api/settings')).json()).sources.some(source => source.path === missingFolder));
+    await page.locator('#save-settings').click();
+    await page.waitForSelector('#settings-dialog',{state:'hidden'});
+    await missingWarning.waitFor({state:'detached'});
+    await page.reload();
+    await page.waitForSelector('#project-table');
+    assert.equal(await missingWarning.count(),0);
+    assert.equal((await (await page.request.get(ready.url + '/api/settings')).json()).sources.some(source => source.path === missingFolder),false);
+    assert(require('node:fs').existsSync(ready.projects),'Removing a source must preserve files');
     assert.deepEqual(errors, []);
     console.log('Settings UI passed: save, reload, validation, detection, escaping, English/German, themes, section tabs, keyboard navigation, hidden-field validation and narrow layout.');
   } finally {

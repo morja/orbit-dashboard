@@ -30,6 +30,35 @@ const shot = (name) => path.join(os.tmpdir(), `orbit-${name}.png`);
 
     await page.goto(ready.url + '/#key=' + ready.key);
     await page.waitForSelector('#project-table tbody tr');
+    // Remote states stay distinguishable in both languages and appearances.
+    for (const language of ['en', 'de']) {
+      for (const theme of ['light', 'dark']) {
+        await page.evaluate(async ({language, theme}) => {
+          Object.assign((await import('/js/store.js')).store.data.config, {language, theme});
+          (await import('/js/render.js')).render();
+        }, {language, theme});
+        const row = name => page.locator('#project-table tbody tr').filter({hasText: name});
+        assert.equal(await row('shop').locator('.remote-state').innerText(), language === 'en' ? 'No remote' : 'Kein Remote');
+        assert.equal(await row('intranet').locator('.remote-state').innerText(), language === 'en' ? 'No tracking branch' : 'Kein Tracking-Branch');
+        assert.equal(await row('alpha-app').locator('.remote-state').innerText(), language === 'en' ? 'In sync' : 'Synchron');
+        assert.equal(await row('portal').locator('.remote-state').innerText(), language === 'en' ? 'Comparison unavailable' : 'Vergleich nicht verfügbar');
+        assert.match(await row('beta-site').locator('.branch').innerText(), /↑2.*↓1/);
+        assert.equal(await row('beta-site').locator('.remote-state').count(), 0);
+        assert(await page.locator('.remote-state').evaluateAll(items => items.every(el => {
+          const branch = el.closest('.branch');
+          if (!branch) return false;
+          const status = el.getBoundingClientRect();
+          const line = branch.getBoundingClientRect();
+          return status.top >= line.top && status.bottom <= line.bottom + 1;
+        })), 'Remote status must share the branch line');
+        assert.equal(await page.locator('html').getAttribute('data-theme'), theme);
+        await page.screenshot({path:shot(`remote-${language}-${theme}`),fullPage:true});
+      }
+    }
+    await page.evaluate(async () => {
+      Object.assign((await import('/js/store.js')).store.data.config, {language: 'en', theme: 'system'});
+      (await import('/js/render.js')).render();
+    });
     await page.locator('#search').focus();
     await page.evaluate(async () => {
       const {store} = await import('/js/store.js');
