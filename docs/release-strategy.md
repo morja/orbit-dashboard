@@ -27,4 +27,24 @@ The MIT open-source model suits a local workspace tool: users can inspect what i
 read, adapt collectors and contribute fixes. Keep optional server access explicit,
 provide clear installation instructions and scope the supported platforms. Avoid
 implying support for arbitrary environments before testing them. Packaging and a
-small external testing group are the next distribution priorities.
+small external testing group remain future distribution work.
+
+## Packaging deferred
+
+Decision recorded on 11 October 2026: postpone standalone macOS packaging,
+signing and notarization while continuing source preview development. The maintainer
+does not currently have an Apple Developer membership. Do not make purchasing
+membership a prerequisite for ongoing development or source preview releases.
+There is no scheduled packaging milestone. Revisit this decision when the maintainer
+chooses to prioritize installation for users without a development environment.
+
+Keep the eventual packaging work in this repository. A dedicated build script
+should bundle Python, the backend and dashboard resources into the app. Store user
+settings and data outside the bundle so upgrades preserve them. A separate build
+workflow should produce testable artifacts without publishing a release.
+
+Before offering an installable beta, verify installation, startup, shutdown and
+upgrades on another Mac without the source checkout or an installed Python runtime.
+Choose architecture support explicitly. Add Developer ID signing and notarization
+when preparing public app distribution, then attach the tested app package to the
+existing reviewed release process. Source previews remain the current release format.
