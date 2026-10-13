@@ -9,14 +9,12 @@ import re
 import subprocess
 import tempfile
 import threading
-import time
 
 
 class GoAccessCache:
     def __init__(self, directory):
         self.directory = Path(directory) / 'goaccess'
         self.lock = threading.Lock()
-        self.last_attempt = {}
 
     def read(self):
         try:
@@ -48,9 +46,6 @@ class GoAccessCache:
             raise ValueError('A report download is already running')
         try:
             source = config['host'] + ':' + config['command']
-            if time.monotonic() - self.last_attempt.get(source, -1000) < 300:
-                raise ValueError('Wait five minutes before downloading reports again')
-            self.last_attempt[source] = time.monotonic()
             # Configuration validation accepts one executable, no shell arguments.
             result = subprocess.run(['ssh', '-T', '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes',
                 '-o', 'ConnectTimeout=10', config['host'], config['command']],

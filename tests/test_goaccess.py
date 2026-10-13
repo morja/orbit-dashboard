@@ -39,7 +39,6 @@ class GoAccessTests(unittest.TestCase):
             self.assertEqual(run.call_args.args[0][-1], '/srv/analytics/export')
             self.assertIn('StrictHostKeyChecking=yes', run.call_args.args[0])
             before = (Path(directory) / 'goaccess/summary.json').read_bytes()
-            cache.last_attempt.clear()
             malformed = self.payload()
             malformed['reports'].append({**malformed['reports'][0], 'id': '../outside'})
             with patch('goaccess_integration.subprocess.run', return_value=SimpleNamespace(returncode=0, stdout=json.dumps(malformed).encode())):
@@ -63,14 +62,13 @@ class GoAccessTests(unittest.TestCase):
             self.assertEqual(cache.report('site', 'all'), b'period-all')
             self.assertIsNone(cache.report('site', '../outside'))
             before = cache.read()
-            cache.last_attempt.clear()
             report['periods']['7']['startDate'] = 'invalid'
             with patch('goaccess_integration.subprocess.run', return_value=SimpleNamespace(returncode=0, stdout=json.dumps(payload).encode())):
                 with self.assertRaises(ValueError):
                     cache.refresh(self.config())
             self.assertEqual(cache.read(), before)
 
-    def test_disabled_never_connects_and_repeated_download_is_limited(self):
+    def test_disabled_never_connects_and_sequential_downloads_are_allowed(self):
         with tempfile.TemporaryDirectory() as directory:
             cache = GoAccessCache(directory)
             with patch('goaccess_integration.subprocess.run') as run:
@@ -79,6 +77,27 @@ class GoAccessTests(unittest.TestCase):
                 run.assert_not_called()
             with patch('goaccess_integration.subprocess.run', return_value=SimpleNamespace(returncode=0, stdout=json.dumps(self.payload()).encode())) as run:
                 cache.refresh(self.config())
-                with self.assertRaises(ValueError):
+                cache.refresh(self.config())
+                self.assertEqual(run.call_count, 2)
+
+    def test_parallel_download_is_rejected_and_failure_releases_lock(self):
+        with tempfile.TemporaryDirectory() as directory:
+            cache = GoAccessCache(directory)
+            answer = SimpleNamespace(returncode=0, stdout=json.dumps(self.payload()).encode())
+
+            def download(*args, **kwargs):
+                # Attempt a second request while the first holds the download lock.
+                with self.assertRaisesRegex(ValueError, 'A report download is already running'):
                     cache.refresh(self.config())
+                return answer
+
+            with patch('goaccess_integration.subprocess.run', side_effect=download) as run:
+                cache.refresh(self.config())
                 self.assertEqual(run.call_count, 1)
+
+            with patch('goaccess_integration.subprocess.run', side_effect=OSError):
+                with self.assertRaisesRegex(ValueError, 'GoAccess download unavailable'):
+                    cache.refresh(self.config())
+
+            with patch('goaccess_integration.subprocess.run', return_value=answer):
+                self.assertEqual(len(cache.refresh(self.config())['reports']), 1)

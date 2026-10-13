@@ -5,7 +5,8 @@ with the normal Settings Save button. Disable it there to hide Web traffic witho
 changing server preparation or deleting cached reports. Configure an
 existing trusted SSH alias and one read-only export executable. Fresh installs
 keep it disabled. The integration has no automatic collector and does not change
-servers; Load reports downloads a prepared snapshot with a five-minute cooldown.
+servers; Load reports downloads a prepared snapshot on demand. Sequential manual
+downloads have no waiting period; overlapping downloads are rejected.
 
 The server exporter writes JSON to stdout with schemaVersion 1 and reports. Each
 report has an id matching [a-z0-9-]{1,80}, label, generatedAt ISO timestamp,
