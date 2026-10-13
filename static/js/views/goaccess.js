@@ -13,7 +13,13 @@ let message = '';
 let redraw = () => {};
 
 export async function loadGoAccess() {
-  try { snapshot = await api('/api/goaccess'); } catch (error) { message = error.message; }
+  try {
+    snapshot = await api('/api/goaccess');
+    message = '';
+  } catch (error) {
+    message = error.message;
+  }
+
   if (store.view === 'goaccess') redraw();
 }
 

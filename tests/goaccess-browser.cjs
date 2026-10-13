@@ -23,6 +23,19 @@ const assert=require('node:assert/strict');
   assert.match(await page.locator('[data-goaccess-report="demo"]').innerText(), /80/);
   await page.locator('#goaccess-period').selectOption('30');
   assert.equal(await page.locator('.goaccess-hostname').innerText(), 'example.test');
+  // A failed download must not leave a stale notice after reloading the cache.
+  await page.route('**/api/goaccess/refresh', route => route.fulfill({
+   status: 503, contentType: 'application/json',
+   body: JSON.stringify({error: 'GoAccess download unavailable; the previous local copy is preserved'})
+  }));
+  await page.locator('#goaccess-refresh').click();
+  await page.waitForFunction(() => document.querySelector('.goaccess-toolbar .notice')?.textContent.includes('GoAccess download unavailable'));
+  await page.unroute('**/api/goaccess/refresh');
+  await page.locator('nav [data-view="overview"]').click();
+  await page.locator('nav [data-view="goaccess"]').click();
+  await page.waitForSelector('[data-goaccess-report="demo"]');
+  await page.waitForFunction(() => !document.querySelector('.goaccess-toolbar .notice'));
+  assert.equal(await page.locator('[data-goaccess-report="demo"]').count(), 1);
   await page.waitForFunction(() => getComputedStyle(document.querySelector('.goaccess-card')).paddingTop === '10px');
   assert.ok(await page.locator('.goaccess-toolbar').evaluate(el => el.getBoundingClientRect().height) < 90, 'Toolbar stays compact');
   await page.locator('[data-goaccess-report="demo"]').click();
