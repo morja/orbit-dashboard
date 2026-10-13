@@ -7,6 +7,9 @@ existing trusted SSH alias and one read-only export executable. Fresh installs
 keep it disabled. The integration has no automatic collector and does not change
 servers; Load reports downloads a prepared snapshot on demand. Sequential manual
 downloads have no waiting period; overlapping downloads are rejected.
+Opening Web traffic reads the saved local copy and never starts an SSH download,
+including after app startup. The Load reports button shows a loading state and
+is disabled while that local read or a manual download is in progress.
 
 The server exporter writes JSON to stdout with schemaVersion 1 and reports. Each
 report has an id matching [a-z0-9-]{1,80}, label, generatedAt ISO timestamp,

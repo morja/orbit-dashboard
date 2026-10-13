@@ -13,8 +13,24 @@ const assert=require('node:assert/strict');
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.goto(ready.url+'/#key='+ready.key);
   await page.waitForSelector('#project-table tbody tr');
+  let downloads = 0;
+  page.on('request', request => {
+   if (request.url().endsWith('/api/goaccess/refresh')) downloads++;
+  });
+  let releaseCache;
+  const cacheGate = new Promise(resolve => { releaseCache = resolve; });
+  await page.route('**/api/goaccess', async route => {
+   await cacheGate;
+   await route.continue();
+  });
   await page.locator('nav [data-view="goaccess"]').click();
+  await page.waitForFunction(() => document.querySelector('#goaccess-refresh')?.disabled);
+  assert.equal(await page.locator('#goaccess-refresh').innerText(), 'Loading reports…');
+  assert.equal(downloads, 0, 'Opening Web traffic must only read the local cache');
+  releaseCache();
   await page.waitForSelector('[data-goaccess-report="demo"]');
+  await page.waitForFunction(() => !document.querySelector('#goaccess-refresh')?.disabled);
+  await page.unroute('**/api/goaccess');
   assert.equal(await page.locator('#goaccess-period').inputValue(), '30');
   assert.match(await page.locator('[data-goaccess-report="demo"]').innerText(), /37/);
   await page.locator('#goaccess-period').selectOption('7');
@@ -24,11 +40,23 @@ const assert=require('node:assert/strict');
   await page.locator('#goaccess-period').selectOption('30');
   assert.equal(await page.locator('.goaccess-hostname').innerText(), 'example.test');
   // A failed download must not leave a stale notice after reloading the cache.
-  await page.route('**/api/goaccess/refresh', route => route.fulfill({
+  let releaseDownload;
+  const downloadGate = new Promise(resolve => { releaseDownload = resolve; });
+  await page.route('**/api/goaccess/refresh', async route => {
+   await downloadGate;
+   await route.fulfill({
    status: 503, contentType: 'application/json',
    body: JSON.stringify({error: 'GoAccess download unavailable; the previous local copy is preserved'})
-  }));
+   });
+  });
   await page.locator('#goaccess-refresh').click();
+  await page.waitForFunction(() => document.querySelector('#goaccess-refresh')?.disabled);
+  await page.locator('nav [data-view="overview"]').click();
+  await page.locator('nav [data-view="goaccess"]').click();
+  assert.equal(await page.locator('#goaccess-refresh').isDisabled(), true);
+  assert.equal(await page.locator('#goaccess-refresh').innerText(), 'Loading reports…');
+  assert.equal(downloads, 1, 'Navigation must not start another download');
+  releaseDownload();
   await page.waitForFunction(() => document.querySelector('.goaccess-toolbar .notice')?.textContent.includes('GoAccess download unavailable'));
   await page.unroute('**/api/goaccess/refresh');
   await page.locator('nav [data-view="overview"]').click();

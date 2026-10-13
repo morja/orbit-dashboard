@@ -9,15 +9,23 @@ let snapshot = { reports: [] };
 let selected = null;
 let period = '30';
 let busy = false;
+let loading = false;
 let message = '';
 let redraw = () => {};
 
 export async function loadGoAccess() {
+  // Do not overlap cache reads or replace an active download's result.
+  if (loading || busy) return;
+  loading = true;
+  if (store.view === 'goaccess') redraw();
+
   try {
     snapshot = await api('/api/goaccess');
     message = '';
   } catch (error) {
     message = error.message;
+  } finally {
+    loading = false;
   }
 
   if (store.view === 'goaccess') redraw();
@@ -47,7 +55,7 @@ export function goaccessView() {
         <option value="all" ${period === 'all' ? 'selected' : ''}>${tHtml('All available history')}</option>
       </select></label>
       <div class="goaccess-actions">
-        ${config.enabled ? markup`<button id="goaccess-refresh" class="button secondary" ${busy ? 'disabled' : ''}>${busy ? tHtml('Loading reports…') : tHtml('Load reports')}</button>` : ''}
+        ${config.enabled ? markup`<button id="goaccess-refresh" class="button secondary" ${busy || loading ? 'disabled' : ''}>${busy || loading ? tHtml('Loading reports…') : tHtml('Load reports')}</button>` : ''}
         <button type="button" class="button secondary setup-settings" data-settings-section="tools">${icon('settings')}${tHtml('Settings')}</button>
       </div>
       ${message ? `<p role="status" class="notice">${escape(message)}</p>` : ''}
@@ -80,7 +88,7 @@ export function bindGoAccess(render) {
   document.addEventListener('click', async event => {
     const card = event.target.closest('[data-goaccess-report]');
     if (card) { selected = card.dataset.goaccessReport; redraw(); }
-    if (!event.target.closest('#goaccess-refresh') || busy) return;
+    if (!event.target.closest('#goaccess-refresh') || busy || loading) return;
     busy = true; message = ''; redraw();
     try { snapshot = await api('/api/goaccess/refresh', {}); }
     catch (error) { message = error.message; }
