@@ -31,6 +31,7 @@
   },
   "ui_refresh": 10,
   "projects_foreground_interval": 60,
+  "project_full_check_interval": 1800,
   "projects_background_enabled": true,
   "theme": "system",
   "palette": "orbit",

@@ -21,6 +21,7 @@ def defaults():
             'moon_enabled': False, 'moon_host': '', 'moon_command': 'moon-status', 'moon_label': 'Server',
             'services_enabled': False, 'service_preferences': {}, 'ddev_enabled': False, 'docker_enabled': False, 'terminal': 'auto', 'editor': 'none',
             'intervals': INTERVALS.copy(), 'projects_foreground_interval': 60, 'projects_background_enabled': True,
+            'project_full_check_interval': 1800,
             'ui_refresh': 10, 'theme': 'system', 'palette': 'orbit', 'language': 'en',
             'font_size': 100, 'contrast': 100, 'zoom': 100, 'density': 'compact', 'remember_list_preferences': True, 'show_next_step': True, 'show_storage': True, 'show_last_changed': True, 'show_ddev': True}
 
@@ -192,6 +193,8 @@ def validate(data):
         raise ValueError('Dashboard refresh must be between 5 and 300 seconds')
     if type(result['projects_foreground_interval']) is not int or not 15 <= result['projects_foreground_interval'] <= 86400:
         raise ValueError('Foreground project checks must be between 15 and 86400 seconds')
+    if type(result['project_full_check_interval']) is not int or not 300 <= result['project_full_check_interval'] <= 86400:
+        raise ValueError('Full project checks must be between 300 and 86400 seconds')
     intervals = result['intervals']
     if isinstance(intervals, dict):
         intervals.setdefault('services', INTERVALS['services'])

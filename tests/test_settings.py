@@ -113,6 +113,16 @@ class ConfigurationTest(unittest.TestCase):
             self.assertEqual(reloaded['projects_foreground_interval'], 60)
             self.assertFalse(reloaded['projects_background_enabled'])
 
+    def test_full_project_check_interval_validates_and_persists(self):
+        self.assertEqual(validate({})['project_full_check_interval'], 1800)
+        for value in (True, 299, 86401, 1800.5, '1800'):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                validate({'project_full_check_interval': value})
+        with TemporaryDirectory() as tmp:
+            settings = Settings(Path(tmp) / 'settings.json')
+            settings.save({'project_full_check_interval': 3600})
+            self.assertEqual(Settings(settings.path).value['project_full_check_interval'], 3600)
+
     def test_migration_preserves_original_file_and_project_ids(self):
         with TemporaryDirectory() as tmp:
             root = Path(tmp)

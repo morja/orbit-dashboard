@@ -25,7 +25,8 @@ static/
   js/store.js           shared state: last snapshot, view, filters, sorting
   js/api.js             backend requests and the action key
   js/refresh.js         polling, activity label and progress bar
-  js/render.js          view headings, notices and drawing the current view
+  js/render.js          view headings and drawing the current view
+  js/notices.js         current notices, connection failures and the sidebar panel
   js/views/*.js         one module per view
   js/paths.js           width-aware middle truncation of project paths
   js/project-actions.js note dialog, Git preview, terminal, editor, Finder
@@ -163,3 +164,12 @@ and stay on one line, with ellipsis only when a path exceeds available width.
 
 Shared typography and component rules are maintained in [ui-style.md](ui-style.md).
 Use the named font-size tokens in `tokens.css` for equivalent elements across views.
+
+Global notices appear through the sidebar Notices button, with a count and warning
+color. The count remains visible in collapsed navigation and the mobile icon bar.
+The on-demand popover reuses the shared section heading and attention rows without
+adding height above the dashboard. It supports Escape, outside-click dismissal,
+detail links, and live updates while open. Polling preserves link focus and scroll;
+resolved notices disappear automatically. A connection failure adds a red notice
+and keeps the existing live status visible. Action-specific errors remain beside
+their controls.

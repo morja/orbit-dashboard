@@ -302,8 +302,7 @@ h1 {
   background: var(--red-mark);
 }
 
-.notice,
-.connection-error {
+.notice {
   border: 1px solid var(--amber-line);
   background: var(--amber-soft-bg);
   color: var(--amber-text);

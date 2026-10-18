@@ -133,6 +133,27 @@ windows expire after 45 seconds, and each window has its own activity identity.
 The native app reports activation, key-window and minimization changes explicitly.
 Read-only browser windows cannot activate project checks without the local action key.
 
+On macOS, filesystem notifications mark changed projects for their next scheduled
+check. Unchanged projects reuse cached Git and last-changed values without walking
+their source folders. Returning to Orbit immediately checks pending changes rather
+than rescanning every project. Notifications continue to accumulate in the background
+while project scans are paused. Notifications are asynchronous; changes delivered
+during a check remain pending for the following check.
+
+Source edits, deletions and renames trigger a source timestamp scan for that project.
+Changes confined to Git metadata, logs, hidden folders or configured excluded folders
+update Git without walking source files. Source and commit timestamps are cached
+separately, so commit-only changes still update last changed. Project discovery runs
+again for new/removed project folders and other structural changes. Linked worktrees
+also watch their external Git metadata and shared references.
+
+**Full project checks**, under Settings → Advanced, default to 1800 seconds.
+Full checks also run on startup, after settings changes, after dropped/coalesced
+events, and on manual Refresh. If notifications are unavailable or a watched root
+is missing, Orbit falls back to full scans at the normal project interval. The
+foreground-only preference still applies to automatic full checks. Folder-size
+checks retain their separate hourly interval.
+
 The dashboard window asks for new values every 10 seconds, only while
 it is active and visible; this is also configurable. Unchanged values are answered
 with `304 Not Modified` and are not redrawn.

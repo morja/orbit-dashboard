@@ -1,8 +1,7 @@
 /* Drawing the current view from the last state, and switching views by address. */
 import { goaccessView, loadGoAccess } from './views/goaccess.js';
-import { stale } from './format.js';
-import { escape } from './html.js';
-import { systemMessage, t } from './i18n.js';
+import { t } from './i18n.js';
+import { renderNotices } from './notices.js';
 import { noteRender, updateActivity } from './refresh.js';
 import { applyAppearance } from './settings.js';
 import { fitProjectPaths } from './paths.js';
@@ -42,14 +41,6 @@ function renderHeading(view) {
   document.getElementById('breadcrumb').textContent = viewName(view);
 }
 
-function notices() {
-  const data = store.data;
-  const messages = [...(data.project_errors || []), ...Object.values(data.errors || {})];
-  if (data.config?.ddev_enabled && data.ddev.error) messages.push(data.ddev.error);
-  if (stale(data.projects_checked_at, 180) && data.projects.length && !data.checking.includes('projects')) messages.push('Git and project values are out of date.');
-  return messages.map((message) => `<div class="notice">${escape(systemMessage(message))}</div>`).join('');
-}
-
 let renderedRoute;
 let renderedLanguage;
 
@@ -62,6 +53,7 @@ export function render({ force = false } = {}) {
   const position = {top: window.scrollY, left: window.scrollX};
   const tablePositions = [...document.querySelectorAll('#content .table-wrap')].map(node => ({left: node.scrollLeft, top: node.scrollTop}));
   if (data.config) applyAppearance(data.config);
+  renderNotices();
   // Preserve the interactive report and its scroll position during polling.
   if (sameView && store.view === 'goaccess' && !force && renderedLanguage === data.config?.language) return;
   const content = document.getElementById('content');
@@ -78,7 +70,7 @@ export function render({ force = false } = {}) {
   document.getElementById('footer-status').textContent = data.mac?.hostname || '';
 
   noteRender();
-  content.innerHTML = notices() + views[store.view]();
+  content.innerHTML = views[store.view]();
   fitProjectPaths();
   content.setAttribute('aria-busy', 'false');
   if (searchSelection) {

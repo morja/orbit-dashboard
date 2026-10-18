@@ -27,6 +27,7 @@ import time
 
 from orbit_config import Settings, detect, migrate_legacy, validate
 from remote_probe import probe_script, parse_probe
+from project_changes import ProjectChanges
 
 
 APP = Path(__file__).resolve().parent
@@ -409,7 +410,7 @@ class Store:
 
 
 class Dashboard:
-    def __init__(self, store, config, settings=None):
+    def __init__(self, store, config, settings=None, changes=None):
         self.store = store
         self.settings = settings or Settings(store.directory / "settings.json")
         self.config = migrate_legacy(config) if "roots" in config else validate(config)
@@ -434,6 +435,10 @@ class Dashboard:
         self.started_at = stamp()
         self.action_key = store.action_key()
         self.progress = {}
+        # Production supplies native events. Fixtures can keep conservative scans
+        # or inject a deterministic event source without watching user folders.
+        self.project_changes = changes
+        self.projects_full_checked = None
         self.restore()
         self.stop = threading.Event()
 
@@ -484,6 +489,8 @@ class Dashboard:
             interval = self.config['intervals'][name]
             if name == 'projects' and self.foreground_clients:
                 interval = self.config['projects_foreground_interval']
+            if name == 'projects':
+                interval = min(interval, self.config['project_full_check_interval'])
             if name in self.active or (not force and time.time() - self.last.get(name, 0) < interval):
                 return
             self.active.add(name)
@@ -520,6 +527,8 @@ class Dashboard:
         return copy.deepcopy(self.config)
 
     def refresh(self, force=False):
+        if force and self.project_changes:
+            self.project_changes.invalidate()
         for name in ["mac", "projects", "moon", "ddev", "docker", "sizes", "services"]:
             if name in ("moon", "ddev", "docker", "services") and not self.config[name + "_enabled"]:
                 continue
@@ -558,10 +567,25 @@ class Dashboard:
 
     def collect_projects(self):
         config = self.config
-        discovered, errors = discover_projects(config["sources"], config["scan_depth"], config["excluded_dirs"])
+        with self.lock:
+            cached = copy.deepcopy(self.projects)
+            previous = {p['id']: p for p in cached}
+            errors = list(getattr(self, 'project_errors', []))
+        changes = self.project_changes
+        batch = None
+        if changes:
+            changes.configure(config['sources'], cached, config['excluded_dirs'])
+            batch = changes.snapshot()
+        full = (batch is None or batch.full or self.projects_full_checked is None
+                or time.monotonic() - self.projects_full_checked >= config['project_full_check_interval'])
+        if full or batch.discovery:
+            discovered, errors = discover_projects(config['sources'], config['scan_depth'], config['excluded_dirs'])
+            if changes:
+                changes.configure(config['sources'], discovered, config['excluded_dirs'], rebuild=True)
+        else:
+            discovered = cached
         notes = self.store.notes()
         with self.lock:
-            previous = {p["id"]: p for p in self.projects}
             self.progress["projects"] = {"done": 0, "total": len(discovered)}
 
         def inspect(project):
@@ -569,9 +593,23 @@ class Dashboard:
                 if notes.get(project["id"], {}).get("state", project.get("default_state", "active")) == "archived":
                     # Archived projects keep their space in storage, without active Git checks.
                     return {"git": {"available": False, "status": "archived", "changed": 0},
-                            "last_modified": previous.get(project["id"], {}).get("last_modified")}
-                git = git_status(project["path"])
-                return {"git": git, "last_modified": latest_change(project["path"], git.get("last_commit"), excluded_dirs=config['excluded_dirs'])}
+                            "last_modified": previous.get(project["id"], {}).get("last_modified"),
+                            'source_modified': previous.get(project['id'], {}).get('source_modified')}
+                old = previous.get(project['id'], {})
+                needs_check = (full or project['id'] in batch.dirty or not old.get('git')
+                               or old['git'].get('status') in ('archived', 'unknown'))
+                if not needs_check:
+                    return {'git': old['git'], 'last_modified': old.get('last_modified'),
+                            'source_modified': old.get('source_modified')}
+                git = git_status(project['path'])
+                scan_source = full or project['id'] in batch.source_dirty or not old or old.get('git', {}).get('status') == 'archived'
+                # Keep source and commit times separate: changing HEAD/index alone
+                # can update Git and the displayed timestamp without walking files.
+                source_modified = (latest_change(project['path'], excluded_dirs=config['excluded_dirs'])
+                                   if scan_source else old.get('source_modified'))
+                modified = max(source_modified or 0, git.get('last_commit') or 0) or None
+                project['has_ddev'] = (Path(project['path']) / '.ddev/config.yaml').is_file()
+                return {'git': git, 'last_modified': modified, 'source_modified': source_modified}
             finally:
                 with self.lock:
                     self.progress["projects"]["done"] += 1
@@ -590,8 +628,14 @@ class Dashboard:
             self.projects = discovered
             self.project_errors = errors
             self.projects_checked = stamp()
+            if full:
+                self.projects_full_checked = time.monotonic()
             saved = {"scope": self.project_scope(), "projects": discovered, "errors": errors, "checked_at": self.projects_checked}
         self.store.cache("projects", saved)
+        if changes:
+            # Only acknowledge the events present before discovery/inspection.
+            # Events delivered while collectors ran remain dirty for the next check.
+            changes.acknowledge(batch.generation)
         # Start sizing as soon as discovery finishes, including the first scan.
         if self.project_checks_active():
             self.schedule("sizes", self.collect_sizes, True)
@@ -986,7 +1030,8 @@ def main():
             os.setsid()
     os.umask(0o077)
     settings = Settings(args.data_dir / "settings.json", APP / "config.json")
-    dashboard = Dashboard(Store(args.data_dir), settings.value, settings)
+    changes = ProjectChanges(APP)
+    dashboard = Dashboard(Store(args.data_dir), settings.value, settings, changes=changes)
     if args.managed:
         parent_pid = args.parent_pid or os.getppid()
 
@@ -1010,6 +1055,7 @@ def main():
         dashboard.stop.set()
         server.server_close()
         dashboard.pool.shutdown(wait=True)
+        changes.close()
 
 
 if __name__ == "__main__":

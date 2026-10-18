@@ -26,6 +26,11 @@
       <a href="#storage" data-view="storage" aria-label="Storage"><span data-icon="disk"></span>Storage</a>
     </nav>
     <div class="sidebar-note"><div class="mini-orbit"></div><p>Everything in one place.</p><span>Your Mac. Your projects.<br>Your next step.</span></div>
+    <div class="sidebar-notices">
+      <button id="notices-toggle" popovertarget="notices-panel" aria-label="Notices" aria-haspopup="dialog" aria-expanded="false">
+        <span data-icon="bell"></span><span class="notices-label">Notices</span><span id="notices-count" hidden>0</span>
+      </button>
+    </div>
     <div class="sidebar-bottom">
       <span class="local-dot"></span>Local on your Mac
       <button id="settings" class="icon-button" title="Settings" aria-label="Settings"><span data-icon="settings"></span></button>
@@ -53,8 +58,6 @@
       <div class="live-label" id="live-label"><span class="local-dot"></span><span>Connecting …</span></div>
     </div>
 
-    <div id="connection-error" class="connection-error" hidden>The dashboard connection was lost. The last values remain visible.</div>
-
     <div id="content" aria-live="polite" aria-busy="true">
       <div class="loading-state">
         <span class="spinner"></span>
@@ -65,6 +68,15 @@
 
     <footer>Orbit <span>·</span> A clear view of your workspace.<span class="footer-right" id="footer-status"></span></footer>
   </main>
+
+  <section id="notices-panel" class="panel" popover="auto" role="dialog" aria-labelledby="notices-title">
+    <div class="section-heading">
+      <h2 id="notices-title">Notices</h2>
+      <button class="icon-button" popovertarget="notices-panel" popovertargetaction="hide" aria-label="Close notices"><span data-icon="close"></span></button>
+    </div>
+    <div id="notices-list"></div>
+  </section>
+  <span id="notices-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span>
 
   <dialog id="project-dialog">
     <form id="project-form">

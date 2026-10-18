@@ -681,7 +681,7 @@ const shot = (name) => path.join(os.tmpdir(), `orbit-${name}.png`);
         state: await page.evaluate(() => ({
           route: location.hash.startsWith('#key=') ? '#key=[redacted]' : location.hash,
           view: document.body.dataset.view,
-          connectionLost: !document.getElementById('connection-error').hidden,
+          connectionLost: document.getElementById('notices-toggle').dataset.level === 'error',
           content: document.getElementById('content').innerText.slice(0, 1200),
         })),
       }));

@@ -10,6 +10,7 @@ import { t } from './i18n.js';
 import { render } from './render.js';
 import { store } from './store.js';
 import { notify } from './toast.js';
+import { setConnectionLost } from './notices.js';
 
 // Checks shown in the top bar. Folder sizes run long and have their own note below the table.
 const visibleChecks = ['projects', 'moon', 'ddev', 'docker', 'services'];
@@ -86,17 +87,19 @@ export async function poll() {
   try {
     const response = await fetchState(stateTag);
     if (response.status !== 304 && !response.ok) throw new Error(t('Request failed'));
-    document.getElementById('connection-error').hidden = true;
     if (response.status === 304) {
+      setConnectionLost(false);
+      if (store.data) updateActivity();
       // Relative times such as "3 min ago" still need an occasional redraw.
       if (Date.now() - lastRender > 60000) render();
       return;
     }
     stateTag = response.headers.get('ETag');
     store.data = await response.json();
+    setConnectionLost(false);
     render();
   } catch {
-    document.getElementById('connection-error').hidden = false;
+    setConnectionLost(true);
     document.getElementById('live-label').textContent = t('Connection lost');
   } finally {
     fetching = false;

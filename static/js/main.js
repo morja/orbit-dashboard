@@ -16,6 +16,7 @@ import { bindServerSummaries } from './views/server.js';
 import { bindServicesEvents } from './views/services.js';
 import { bindDockerEvents } from './views/docker.js';
 import { bindProjectEvents } from './views/projects.js';
+import { bindNotices } from './notices.js';
 
 function updateClock() {
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -38,6 +39,7 @@ bindProjectActions();
 bindCommitHistory();
 bindGitMiniPreviews();
 bindSettings();
+bindNotices();
 bindServerSummaries();
 
 navigate();
