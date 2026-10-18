@@ -209,24 +209,34 @@ def open_cmux(project):
         raise ValueError("cmux workspace opened, but its window could not be activated")
 
 
-def latest_change(path, last_commit=None):
+def latest_change(path, last_commit=None, excluded_dirs=None):
     """Newest source-file modification or commit; generated dependencies do not count."""
     latest = last_commit or 0
-    root_path = Path(path)
-    for root, directories, files in os.walk(root_path, followlinks=False):
-        directories[:] = [d for d in directories if d not in SKIP
-                          and (not d.startswith(".") or d == ".ddev")
-                          and not (Path(root) / d).is_symlink()
-                          and not (root_path == APP and d == "data" and Path(root) == APP)]
-        for filename in files:
-            if filename == ".DS_Store" or filename.lower().endswith(".log"):
-                continue
-            file = Path(root) / filename
-            try:
-                if not file.is_symlink():
-                    latest = max(latest, file.stat().st_mtime)
-            except OSError:
-                continue
+    excluded = set(SKIP if excluded_dirs is None else excluded_dirs)
+    root_path = os.fspath(path)
+    pending = [root_path]
+    while pending:
+        directory = pending.pop()
+        try:
+            # DirEntry reuses directory metadata. Only source files need a stat,
+            # rather than rebuilding Path objects and checking each file twice.
+            with os.scandir(directory) as entries:
+                for entry in entries:
+                    try:
+                        if entry.is_symlink():
+                            continue
+                        if entry.is_dir(follow_symlinks=False):
+                            if entry.name in excluded or (entry.name.startswith('.') and entry.name != '.ddev'):
+                                continue
+                            if root_path == str(APP) and directory == root_path and entry.name == 'data':
+                                continue
+                            pending.append(entry.path)
+                        elif entry.name != '.DS_Store' and not entry.name.lower().endswith('.log'):
+                            latest = max(latest, entry.stat(follow_symlinks=False).st_mtime)
+                    except OSError:
+                        continue  # Files can disappear while an editor or build is writing.
+        except OSError:
+            continue
     return latest or None
 
 
@@ -407,6 +417,7 @@ class Dashboard:
         self.pool = ThreadPoolExecutor(max_workers=5)
         self.active = set()
         self.last = {}
+        self.foreground_clients = {}
         self.errors = {}
         self.projects = []
         self.mac = None
@@ -446,10 +457,34 @@ class Dashboard:
         if self.config["docker_enabled"]:
             self.docker = self.store.cached("docker") or self.docker
 
-    def schedule(self, name, fn, force=False):
-        intervals = self.config["intervals"]
+    def project_checks_active(self):
         with self.lock:
-            if name in self.active or (not force and time.time() - self.last.get(name, 0) < intervals[name]):
+            now = time.monotonic()
+            self.foreground_clients = {client: until for client, until in self.foreground_clients.items() if until > now}
+            return bool(self.foreground_clients) or self.config['projects_background_enabled']
+
+    def set_activity(self, client, active):
+        with self.lock:
+            self.project_checks_active()  # Expire windows that closed without a final message.
+            returning = active and client not in self.foreground_clients
+            if active:
+                if len(self.foreground_clients) >= 64 and client not in self.foreground_clients:
+                    raise ValueError('Too many active windows')
+                self.foreground_clients[client] = time.monotonic() + 45
+            else:
+                self.foreground_clients.pop(client, None)
+            if returning:
+                # Heartbeats keep the foreground interval; a returning window refreshes now.
+                self.schedule('projects', self.collect_projects, True)
+
+    def schedule(self, name, fn, force=False):
+        with self.lock:
+            if name in ('projects', 'sizes') and not force and not self.project_checks_active():
+                return
+            interval = self.config['intervals'][name]
+            if name == 'projects' and self.foreground_clients:
+                interval = self.config['projects_foreground_interval']
+            if name in self.active or (not force and time.time() - self.last.get(name, 0) < interval):
                 return
             self.active.add(name)
         self.pool.submit(self._run, name, fn)
@@ -536,7 +571,7 @@ class Dashboard:
                     return {"git": {"available": False, "status": "archived", "changed": 0},
                             "last_modified": previous.get(project["id"], {}).get("last_modified")}
                 git = git_status(project["path"])
-                return {"git": git, "last_modified": latest_change(project["path"], git.get("last_commit"))}
+                return {"git": git, "last_modified": latest_change(project["path"], git.get("last_commit"), excluded_dirs=config['excluded_dirs'])}
             finally:
                 with self.lock:
                     self.progress["projects"]["done"] += 1
@@ -558,7 +593,8 @@ class Dashboard:
             saved = {"scope": self.project_scope(), "projects": discovered, "errors": errors, "checked_at": self.projects_checked}
         self.store.cache("projects", saved)
         # Start sizing as soon as discovery finishes, including the first scan.
-        self.schedule("sizes", self.collect_sizes, True)
+        if self.project_checks_active():
+            self.schedule("sizes", self.collect_sizes, True)
 
     def collect_sizes(self):
         with self.lock:
@@ -869,6 +905,13 @@ class Handler(BaseHTTPRequestHandler):
             data = json.loads(self.rfile.read(length))
             path = urlparse(self.path).path
             dashboard = self.server.dashboard
+            if path == '/api/activity':
+                if (not isinstance(data, dict) or set(data) != {'client', 'active'}
+                        or not isinstance(data['client'], str) or not re.fullmatch(r'[a-f0-9]{32}', data['client'])
+                        or type(data['active']) is not bool):
+                    raise ValueError('Invalid window activity')
+                dashboard.set_activity(data['client'], data['active'])
+                return self.send({'ok': True})
             if path == "/api/goaccess/refresh":
                 try:
                     return self.send(dashboard.goaccess.refresh(copy.deepcopy(dashboard.config['goaccess'])))

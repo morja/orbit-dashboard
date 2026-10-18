@@ -36,6 +36,18 @@ const shot = (name) => path.join(os.tmpdir(), `orbit-${name}.png`);
 
     await page.goto(ready.url + '/#key=' + ready.key);
     await page.waitForSelector('#project-table tbody tr');
+    // Native foreground notifications must send authenticated, ordered transitions.
+    for (const active of [false, true, true, false, true]) {
+      const sent = page.waitForRequest(request => request.url().endsWith('/api/activity') && request.postDataJSON()?.active === active);
+      await page.evaluate(active => {
+        window.orbitWindowActive = active;
+        window.dispatchEvent(new Event('orbit-activity'));
+      }, active);
+      const request = await sent;
+      assert.match(request.postDataJSON().client, /^[a-f0-9]{32}$/);
+      assert.equal((await request.response()).status(), 200);
+    }
+    await page.evaluate(() => { delete window.orbitWindowActive; });
     // Both Git previews use click-operated dialogs; polling must not replace history.
     let historyRequests = 0;
     page.on('request', request => { if (request.url().endsWith('/commits')) historyRequests++; });

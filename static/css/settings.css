@@ -207,6 +207,11 @@ details.settings-source[open] summary {
   margin: 6px 0;
 }
 
+#settings-intervals > .settings-toggle,
+#settings-intervals > p {
+  grid-column: 1 / -1;
+}
+
 /* Errors and actions stay below the scrolling panel. */
 #settings-error {
   flex: none;

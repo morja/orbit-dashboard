@@ -16,10 +16,13 @@ function actionKey() {
   try { return localStorage.getItem('orbit-action-key') || ''; } catch { return ''; }
 }
 
+export const hasActionKey = () => Boolean(actionKey());
+
 /** GET without data, POST with data. Errors carry a translated message. */
-export async function api(path, data) {
+export async function api(path, data, { keepalive = false } = {}) {
   const options = data === undefined ? {} : {
     method: 'POST',
+    keepalive,
     headers: { 'Content-Type': 'application/json', 'X-Orbit-Key': actionKey() },
     body: JSON.stringify(data),
   };

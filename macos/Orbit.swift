@@ -181,6 +181,8 @@ final class OrbitApp: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavig
         guard let key = try? String(contentsOf: file, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines),
               key.range(of: "^[0-9a-f]{64}$", options: .regularExpression) != nil else { return }
         controller.addUserScript(WKUserScript(source: "window.orbitActionKey = \"\(key)\";", injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        let active = NSApp.isActive && window.isKeyWindow && !window.isMiniaturized
+        controller.addUserScript(WKUserScript(source: "window.orbitWindowActive = \(active);", injectionTime: .atDocumentStart, forMainFrameOnly: true))
     }
 
     private func launchBackend() {
@@ -246,13 +248,30 @@ final class OrbitApp: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavig
         try? log?.close()
     }
 
-    @objc private func reloadPage() { webView.reload() }
+    @objc private func reloadPage() {
+        injectActionKey()
+        webView.reload()
+    }
+
+    private func reportWindowActivity() {
+        guard webView != nil else { return }
+        let active = NSApp.isActive && window.isKeyWindow && !window.isMiniaturized
+        webView.evaluateJavaScript("window.orbitWindowActive = \(active); window.dispatchEvent(new Event('orbit-activity'));")
+    }
+
+    func applicationDidBecomeActive(_ notification: Notification) { reportWindowActivity() }
+    func applicationDidResignActive(_ notification: Notification) { reportWindowActivity() }
+    func windowDidBecomeKey(_ notification: Notification) { reportWindowActivity() }
+    func windowDidResignKey(_ notification: Notification) { reportWindowActivity() }
+    func windowDidMiniaturize(_ notification: Notification) { reportWindowActivity() }
+    func windowDidDeminiaturize(_ notification: Notification) { reportWindowActivity() }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
     func applicationWillTerminate(_ notification: Notification) { stopBackend() }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         overlay.isHidden = true
+        reportWindowActivity()
         if smokeTest { checkUI() }
     }
 

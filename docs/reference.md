@@ -118,9 +118,22 @@ rm ~/Library/LaunchAgents/one.tearoom.orbit-dashboard.plist
 `data/orbit.log` contains startup output. Both stay local and are excluded from Git.
 The dashboard uses no external fonts or APIs.
 
-Default intervals are 30 seconds for Mac storage, one minute for projects and DDEV,
-two minutes for server status and Docker, and one hour for folder sizes. These are
-configurable. The dashboard window asks for new values every 10 seconds, only while
+Default intervals are 30 seconds for Mac storage, one minute for foreground project checks
+and DDEV, five minutes for background project checks, two minutes for server status
+and Docker, and one hour for folder sizes. Existing saved intervals are preserved.
+Under Settings → Advanced, disable **Check projects in the background** to pause
+project discovery, Git, last-changed and folder-size checks while no authenticated
+Orbit window is active. Returning to the foreground checks projects immediately;
+checks already running finish normally. The foreground interval and background
+interval are independently editable. Manual Refresh still works while paused.
+Other enabled integrations keep their own schedules.
+
+Foreground windows report activity every 15 seconds. Closed or disconnected
+windows expire after 45 seconds, and each window has its own activity identity.
+The native app reports activation, key-window and minimization changes explicitly.
+Read-only browser windows cannot activate project checks without the local action key.
+
+The dashboard window asks for new values every 10 seconds, only while
 it is active and visible; this is also configurable. Unchanged values are answered
 with `304 Not Modified` and are not redrawn.
 
@@ -140,6 +153,11 @@ projects. A detected project ends discovery in that subtree to avoid counting it
 dependencies or nested repositories. Container folders are split into their projects.
 Hidden folders, symbolic links and excluded dependency/build folders are skipped.
 Direct folders without project markers can also be included.
+
+Last-changed checks use directory entries directly, read each source file's
+modification time once, and honor the configured excluded folders. Uncommitted
+edits still count. Hidden folders other than `.ddev`, symlinks, `.log` files and
+Orbit's own `data/` directory are excluded.
 
 Folder sizes include dependencies and Git files, but exclude separate Docker
 volumes and DDEV databases. APFS clones, snapshots and purgeable space may differ

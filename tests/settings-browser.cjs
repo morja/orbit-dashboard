@@ -49,6 +49,10 @@ const assert = require('node:assert/strict');
     await page.locator('#setting-goaccess_enabled').check();
     await page.locator('#setting-goaccess_host').fill('fixture');
     await page.locator('#setting-goaccess_command').fill('/fixture/export');
+    await selectTab('advanced');
+    await page.locator('#setting-projects_background_enabled').uncheck();
+    await page.locator('#setting-projects_foreground_interval').fill('60');
+    await page.locator('[data-interval="projects"]').fill('300');
     await page.locator('#save-settings').click();
     await page.waitForSelector('#settings-dialog', { state: 'hidden' });
     await page.waitForSelector('.name-button strong');
@@ -61,6 +65,9 @@ const assert = require('node:assert/strict');
     assert.equal(columnsConfig.show_storage,false);
     assert.equal(columnsConfig.show_last_changed,false);
     assert.equal(columnsConfig.show_ddev,false);
+    assert.equal(columnsConfig.projects_background_enabled, false);
+    assert.equal(columnsConfig.projects_foreground_interval, 60);
+    assert.equal(columnsConfig.intervals.projects, 300);
     assert.equal(await page.locator('[data-sort="ddev"]').count(),0);
     assert.equal(await page.locator('.edit-project').count()>0,true);
     await page.reload();
@@ -87,6 +94,20 @@ const assert = require('node:assert/strict');
           assert.equal(await page.locator('#setting-services_enabled').isChecked(), false);
           assert.match(await page.locator('#setting-services_enabled').locator('..').innerText(), language === 'en' ? /Check local background services/ : /Lokale Hintergrunddienste prüfen/);
           assert(await page.locator('#setting-services_enabled').isVisible());
+          await selectTab('advanced');
+          assert.equal(await page.locator('#setting-projects_background_enabled').isChecked(), false);
+          assert.equal(await page.locator('#setting-projects_foreground_interval').inputValue(), '60');
+          assert.match(await page.locator('#setting-projects_background_enabled').locator('..').innerText(), language === 'en' ? /Check projects in the background/ : /Projekte im Hintergrund prüfen/);
+          assert(await page.locator('#setting-projects_foreground_interval').isVisible());
+          await page.locator('#setting-projects_background_enabled').scrollIntoViewIfNeeded();
+          assert(await page.locator('#setting-projects_background_enabled').locator('..').evaluate(el => {
+            const box = el.getBoundingClientRect();
+            const dialog = el.closest('dialog').getBoundingClientRect();
+            return box.left >= dialog.left && box.right <= dialog.right;
+          }), 'Background project controls must fit inside Settings');
+          if (language === 'de' && theme === 'dark' && width === 390) {
+            await page.screenshot({path: path.join(os.tmpdir(), 'orbit-project-refresh-settings.png')});
+          }
           await selectTab('projects');
           await page.evaluate(async ({folder, language}) => {
             (await import('/js/i18n.js')).setLanguage(language);

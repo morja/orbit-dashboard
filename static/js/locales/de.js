@@ -174,6 +174,11 @@ export default {
   'YOUR WORKSPACE': 'DEIN WORKSPACE',
   '{name}, at a glance.': '{name}, im Blick.',
 
+  'Seconds, in the background': 'Sekunden im Hintergrund',
+  'Projects and Git in the foreground': 'Projekte und Git im Vordergrund',
+  'Check projects in the background': 'Projekte im Hintergrund prüfen',
+  'When disabled, project and folder-size checks pause in the background. Returning to the foreground checks projects immediately. Checks already running finish normally.': 'Wenn deaktiviert, pausieren Projekt- und Ordnergrößenprüfungen im Hintergrund. Bei der Rückkehr in den Vordergrund werden Projekte sofort geprüft. Laufende Prüfungen werden beendet.',
+  'Foreground project checks must be between 15 and 86400 seconds': 'Projektprüfungen im Vordergrund müssen zwischen 15 und 86400 Sekunden liegen',
   // Times and refresh
   'not checked yet': 'noch nicht geprüft',
   'just checked': 'gerade geprüft',

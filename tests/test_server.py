@@ -12,7 +12,7 @@ import urllib.request
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from server import ddev_for_project, docker_bytes, parse_docker_usage, parse_docker_containers, parse_vm_disk, Dashboard, Handler, Store, ThreadingHTTPServer, discover_projects, git_status, latest_change, open_cmux, parse_ddev, parse_moon, project_id
 import os
-from orbit_config import migrate_legacy
+from orbit_config import defaults, migrate_legacy
 
 
 MOON = """MOON STATUS  |  10.10.2026 10:00 Berlin
@@ -115,6 +115,110 @@ class CollectorsTest(unittest.TestCase):
             os.utime(log, (999, 999))
             self.assertEqual(latest_change(root, 100), 250)
             self.assertEqual(latest_change(root, 300), 300)
+
+    def test_activity_tracks_nested_edits_deletions_and_custom_exclusions(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / 'src/nested/code.py'
+            source.parent.mkdir(parents=True)
+            source.touch()
+            os.utime(source, (200, 200))
+            excluded = root / 'generated/output.py'
+            excluded.parent.mkdir()
+            excluded.touch()
+            os.utime(excluded, (900, 900))
+            (root / 'linked-file').symlink_to(excluded)
+            (root / 'linked-folder').symlink_to(excluded.parent, target_is_directory=True)
+
+            self.assertEqual(latest_change(root, 100, excluded_dirs=['generated']), 200)
+            os.utime(source, (300, 300))
+            self.assertEqual(latest_change(root, 100, excluded_dirs=['generated']), 300)
+            source.unlink()
+            self.assertEqual(latest_change(root, 100, excluded_dirs=['generated']), 100)
+
+    def test_project_collection_honors_custom_exclusions_and_ignores_own_data(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp).resolve()
+            (root / '.git').mkdir()
+            for name, modified in [('src.py', 200), ('generated/output.py', 900), ('data/cache.json', 800)]:
+                file = root / name
+                file.parent.mkdir(exist_ok=True)
+                file.touch()
+                os.utime(file, (modified, modified))
+            config = {**defaults(), 'sources': [{'path': str(root)}], 'excluded_dirs': ['generated']}
+            dashboard = Dashboard(Store(root / '.orbit-test-data'), config)
+            try:
+                with patch('server.APP', root), patch('server.git_status', return_value={'last_commit': 100}), patch.object(dashboard, 'schedule'):
+                    dashboard.collect_projects()
+                self.assertEqual(dashboard.projects[0]['last_modified'], 200)
+            finally:
+                dashboard.pool.shutdown()
+
+    def test_project_checks_pause_expire_and_refresh_on_foreground_return(self):
+        with TemporaryDirectory() as tmp:
+            config = {**defaults(), 'projects_background_enabled': False}
+            dashboard = Dashboard(Store(tmp), config)
+            client = 'a' * 32
+            try:
+                with patch('server.time.monotonic', return_value=100), patch.object(dashboard.pool, 'submit') as submit:
+                    dashboard.schedule('projects', dashboard.collect_projects)
+                    dashboard.schedule('sizes', dashboard.collect_sizes)
+                    submit.assert_not_called()
+
+                    dashboard.set_activity(client, True)
+                    submit.assert_called_once()
+                    self.assertIn('projects', dashboard.active)
+                    dashboard.active.clear()
+                    dashboard.last['projects'] = 1000
+
+                    # A heartbeat does not force another scan before the foreground interval.
+                    with patch('server.time.time', return_value=1030):
+                        dashboard.set_activity(client, True)
+                        dashboard.schedule('projects', dashboard.collect_projects)
+                        self.assertEqual(submit.call_count, 1)
+                    with patch('server.time.time', return_value=1060):
+                        dashboard.schedule('projects', dashboard.collect_projects)
+                        self.assertEqual(submit.call_count, 2)
+                    dashboard.active.clear()
+
+                    dashboard.set_activity(client, False)
+                    dashboard.schedule('projects', dashboard.collect_projects)
+                    self.assertEqual(submit.call_count, 2)
+                    dashboard.set_activity(client, True)
+                    self.assertEqual(submit.call_count, 3, 'Returning to the foreground must refresh immediately')
+                    dashboard.active.clear()
+
+                with patch('server.time.monotonic', return_value=146), patch.object(dashboard.pool, 'submit') as submit:
+                    dashboard.schedule('projects', dashboard.collect_projects)
+                    submit.assert_not_called()
+                    dashboard.schedule('projects', dashboard.collect_projects, True)
+                    submit.assert_called_once()  # An explicit Refresh still works.
+            finally:
+                dashboard.pool.shutdown()
+
+    def test_activity_keeps_other_windows_active_and_uses_background_interval(self):
+        with TemporaryDirectory() as tmp:
+            dashboard = Dashboard(Store(tmp), defaults())
+            try:
+                with patch.object(dashboard.pool, 'submit'), patch('server.time.monotonic', return_value=100):
+                    dashboard.set_activity('a' * 32, True)
+                    dashboard.set_activity('b' * 32, True)
+                    dashboard.set_activity('a' * 32, False)
+                    dashboard.active.clear()
+                    dashboard.last['projects'] = 1000
+                    with patch('server.time.time', return_value=1060):
+                        dashboard.schedule('projects', dashboard.collect_projects)
+                        self.assertIn('projects', dashboard.active)
+                    dashboard.active.clear()
+                    dashboard.set_activity('b' * 32, False)
+                    with patch('server.time.time', return_value=1299):
+                        dashboard.schedule('projects', dashboard.collect_projects)
+                        self.assertNotIn('projects', dashboard.active)
+                    with patch('server.time.time', return_value=1300):
+                        dashboard.schedule('projects', dashboard.collect_projects)
+                        self.assertIn('projects', dashboard.active)
+            finally:
+                dashboard.pool.shutdown()
 
     def test_archive_skips_git_and_preserves_notebook(self):
         with TemporaryDirectory() as tmp:
@@ -349,6 +453,23 @@ class ApiTest(unittest.TestCase):
             self.request(f"/api/projects/{self.key}", {"next_step": "unwanted"}, "https://example.com")
         self.assertEqual(context.exception.code, 403)
         self.assertFalse(self.store.notes())
+
+    def test_activity_requires_authentication_and_valid_window_identity(self):
+        data = {'client': 'a' * 32, 'active': True}
+        for key, origin in [('', None), (self.dashboard.action_key, 'https://example.com')]:
+            with self.assertRaises(urllib.error.HTTPError) as error:
+                self.request('/api/activity', data, origin=origin, key=key)
+            self.assertEqual(error.exception.code, 403)
+        for invalid in [{**data, 'active': 1}, {**data, 'client': 'invalid'}, []]:
+            with self.assertRaises(urllib.error.HTTPError) as error:
+                self.request('/api/activity', invalid)
+            self.assertEqual(error.exception.code, 400)
+        with self.request('/api/activity', data) as response:
+            self.assertEqual(response.status, 200)
+        self.assertTrue(self.dashboard.project_checks_active())
+        with self.request('/api/activity', {**data, 'active': False}):
+            pass
+        self.assertFalse(self.dashboard.foreground_clients)
 
     def test_path_traversal_and_invalid_metadata_rejected(self):
         with self.assertRaises(urllib.error.HTTPError) as context:

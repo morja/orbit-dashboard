@@ -3,7 +3,7 @@
  * active: every ui_refresh seconds, and every second while the progress bar shows.
  * Unchanged state is answered with 304 and not redrawn.
  */
-import { api, fetchState } from './api.js';
+import { api, fetchState, hasActionKey } from './api.js';
 import { formatTime } from './format.js';
 import { escape } from './html.js';
 import { t } from './i18n.js';
@@ -18,9 +18,27 @@ let stateTag = null;
 let lastRender = 0;
 let fetching = false;
 let timer;
+let activityTimer;
+let activityRequest = Promise.resolve();
+const activityClient = crypto.randomUUID().replaceAll('-', '');
 let manualRefreshSince = 0;
-// Starts active: an embedded WebKit view may report no focus until its first focus event.
-let windowActive = true;
+let windowActive = document.hasFocus();
+let pageClosing = false;
+
+function pageActive() {
+  // The native app reports key-window changes explicitly, including minimization.
+  return !pageClosing && !document.hidden && (window.orbitWindowActive ?? windowActive);
+}
+
+function syncActivity() {
+  clearTimeout(activityTimer);
+  if (!hasActionKey()) return;
+  const active = pageActive();
+  // Serialize transitions so a delayed foreground message cannot undo a blur.
+  // A closing window sends best-effort keepalive; the backend also expires leases.
+  activityRequest = activityRequest.then(() => api('/api/activity', { client: activityClient, active }, { keepalive: true })).catch(() => {});
+  if (active) activityTimer = setTimeout(syncActivity, 15000);
+}
 
 export const noteRender = () => { lastRender = Date.now(); };
 
@@ -89,7 +107,7 @@ export function schedulePoll() {
   clearTimeout(timer);
   const seconds = store.data && activity().prominent ? 1 : store.data?.config?.ui_refresh || 10;
   timer = setTimeout(async () => {
-    if (windowActive && !document.hidden) await poll();
+    if (pageActive()) await poll();
     schedulePoll();
   }, seconds * 1000);
 }
@@ -113,11 +131,30 @@ export function startRefreshing() {
   document.getElementById('refresh').addEventListener('click', refreshNow);
   window.addEventListener('focus', () => {
     windowActive = true;
+    syncActivity();
     poll();
   });
-  window.addEventListener('blur', () => { windowActive = false; });
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) poll();
+  window.addEventListener('blur', () => {
+    windowActive = false;
+    syncActivity();
   });
+  window.addEventListener('orbit-activity', () => {
+    syncActivity();
+    if (pageActive()) poll();
+  });
+  window.addEventListener('pagehide', () => {
+    pageClosing = true;
+    syncActivity();
+  });
+  window.addEventListener('pageshow', () => {
+    pageClosing = false;
+    windowActive = document.hasFocus();
+    syncActivity();
+  });
+  document.addEventListener('visibilitychange', () => {
+    syncActivity();
+    if (pageActive()) poll();
+  });
+  syncActivity();
   poll().finally(schedulePoll);
 }

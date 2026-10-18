@@ -78,7 +78,7 @@ def main():
             "id": f"{i + 1:07x}", "subject": "Synthetic commit <script> & " + "long subject " * 12,
             "timestamp": int(time.time()) - i * 3600} for i in range(10)]
         server.git_status = git_status
-        server.latest_change = lambda path, last_commit=None: last_commit
+        server.latest_change = lambda path, last_commit=None, **kwargs: last_commit
 
         config = defaults()
         config.update(sources=[

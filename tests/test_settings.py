@@ -94,6 +94,25 @@ class ConfigurationTest(unittest.TestCase):
         self.assertEqual(validate(config)['theme'], 'dark')
         self.assertEqual(validate(config)['language'], 'en')
 
+    def test_foreground_project_intervals_validate_and_keep_existing_preferences(self):
+        self.assertEqual(defaults()['intervals']['projects'], 300)
+        self.assertEqual(defaults()['projects_foreground_interval'], 60)
+        for invalid in [True, 14, 86401, 60.5, '60']:
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                validate({'projects_foreground_interval': invalid})
+        with self.assertRaises(ValueError):
+            validate({'projects_background_enabled': 'false'})
+        with TemporaryDirectory() as tmp:
+            settings = Settings(Path(tmp) / 'settings.json')
+            config = defaults()
+            config['intervals']['projects'] = 180
+            config.update(projects_background_enabled=False, projects_foreground_interval=60)
+            settings.save(config)
+            reloaded = Settings(settings.path).value
+            self.assertEqual(reloaded['intervals']['projects'], 180)
+            self.assertEqual(reloaded['projects_foreground_interval'], 60)
+            self.assertFalse(reloaded['projects_background_enabled'])
+
     def test_migration_preserves_original_file_and_project_ids(self):
         with TemporaryDirectory() as tmp:
             root = Path(tmp)

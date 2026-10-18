@@ -10,7 +10,7 @@ from urllib.parse import urlsplit
 
 
 EXCLUDED = ['node_modules', 'vendor', 'build', 'dist', 'target', 'Pods', 'DerivedData', '__pycache__']
-INTERVALS = {'mac': 30, 'projects': 60, 'moon': 120, 'ddev': 60, 'docker': 120, 'sizes': 3600, 'services': 120}
+INTERVALS = {'mac': 30, 'projects': 300, 'moon': 120, 'ddev': 60, 'docker': 120, 'sizes': 3600, 'services': 120}
 TERMINALS = ['auto', 'cmux', 'Terminal', 'iTerm', 'none']
 EDITORS = ['none', 'Visual Studio Code', 'Cursor', 'PyCharm', 'IntelliJ IDEA']
 PALETTES = ['orbit', 'ocean', 'sand', 'lavender', 'graphite']
@@ -20,7 +20,8 @@ def defaults():
     return {'version': 1, 'goaccess': {'enabled': False, 'host': '', 'command': ''}, 'sources': [], 'servers': [], 'category_order': [], 'scan_depth': 6, 'excluded_dirs': EXCLUDED.copy(),
             'moon_enabled': False, 'moon_host': '', 'moon_command': 'moon-status', 'moon_label': 'Server',
             'services_enabled': False, 'service_preferences': {}, 'ddev_enabled': False, 'docker_enabled': False, 'terminal': 'auto', 'editor': 'none',
-            'intervals': INTERVALS.copy(), 'ui_refresh': 10, 'theme': 'system', 'palette': 'orbit', 'language': 'en',
+            'intervals': INTERVALS.copy(), 'projects_foreground_interval': 60, 'projects_background_enabled': True,
+            'ui_refresh': 10, 'theme': 'system', 'palette': 'orbit', 'language': 'en',
             'font_size': 100, 'contrast': 100, 'zoom': 100, 'density': 'compact', 'remember_list_preferences': True, 'show_next_step': True, 'show_storage': True, 'show_last_changed': True, 'show_ddev': True}
 
 
@@ -91,7 +92,7 @@ def validate(data):
     for name in excluded:
         if not name or '/' in name or name in ('.', '..'):
             raise ValueError('Exclusions must be individual folder names')
-    for key in ('services_enabled', 'moon_enabled', 'ddev_enabled', 'docker_enabled', 'remember_list_preferences', 'show_next_step', 'show_storage', 'show_last_changed', 'show_ddev'):
+    for key in ('services_enabled', 'moon_enabled', 'ddev_enabled', 'docker_enabled', 'remember_list_preferences', 'show_next_step', 'show_storage', 'show_last_changed', 'show_ddev', 'projects_background_enabled'):
         if type(result[key]) is not bool:
             raise ValueError(f'{key} must be a boolean')
     preferences = result['service_preferences']
@@ -189,6 +190,8 @@ def validate(data):
     # How often an active dashboard window asks the backend for new values.
     if type(result['ui_refresh']) is not int or not 5 <= result['ui_refresh'] <= 300:
         raise ValueError('Dashboard refresh must be between 5 and 300 seconds')
+    if type(result['projects_foreground_interval']) is not int or not 15 <= result['projects_foreground_interval'] <= 86400:
+        raise ValueError('Foreground project checks must be between 15 and 86400 seconds')
     intervals = result['intervals']
     if isinstance(intervals, dict):
         intervals.setdefault('services', INTERVALS['services'])

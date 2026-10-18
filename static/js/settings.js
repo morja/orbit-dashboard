@@ -5,7 +5,7 @@
 import { applyReadability } from './appearance.js';
 import { api } from './api.js';
 import { escape, markup } from './html.js';
-import { setLanguage, t, tHtml } from './i18n.js';
+import { onLanguageChange, setLanguage, t, tHtml } from './i18n.js';
 import { icon } from './icons.js';
 import { poll } from './refresh.js';
 import { render } from './render.js';
@@ -176,13 +176,18 @@ function addServer() {
 function intervalFields(config) {
   const intervals = Object.entries(config.intervals).map(([key, seconds]) => markup`
     <label>
-      ${tHtml(intervalLabels[key])}<input type="number" data-interval="${key}" min="${key === 'sizes' ? 300 : 15}" max="86400" required value="${seconds}"><span class="muted">${tHtml('Seconds')}</span>
+      ${tHtml(intervalLabels[key])}<input type="number" data-interval="${key}" min="${key === 'sizes' ? 300 : 15}" max="86400" required value="${seconds}"><span class="muted">${key === 'projects' ? tHtml('Seconds, in the background') : tHtml('Seconds')}</span>
     </label>
   `);
   const dashboard = markup`
     <label>
+      ${tHtml('Projects and Git in the foreground')}<input type="number" id="setting-projects_foreground_interval" min="15" max="86400" required value="${config.projects_foreground_interval}"><span class="muted">${tHtml('Seconds, while the window is active')}</span>
+    </label>
+    <label>
       ${tHtml('Dashboard view')}<input type="number" id="setting-ui_refresh" min="5" max="300" required value="${config.ui_refresh}"><span class="muted">${tHtml('Seconds, while the window is active')}</span>
     </label>
+    <label class="settings-toggle"><input type="checkbox" id="setting-projects_background_enabled" ${config.projects_background_enabled ? 'checked' : ''}>${tHtml('Check projects in the background')}</label>
+    <p class="muted">${tHtml('When disabled, project and folder-size checks pause in the background. Returning to the foreground checks projects immediately. Checks already running finish normally.')}</p>
   `;
   return intervals.join('') + dashboard;
 }
@@ -294,6 +299,8 @@ function collectSettings() {
   config.category_order = field('category_order').value.split('\n').map(value => value.trim()).filter(Boolean);
   config.excluded_dirs = field('excluded_dirs').value.split('\n').map((value) => value.trim()).filter(Boolean);
   config.ui_refresh = Number(field('ui_refresh').value);
+  config.projects_foreground_interval = Number(field('projects_foreground_interval').value);
+  config.projects_background_enabled = field('projects_background_enabled').checked;
   config.intervals = Object.fromEntries([...document.querySelectorAll('[data-interval]')].map((input) => [input.dataset.interval, Number(input.value)]));
   return config;
 }
@@ -319,6 +326,15 @@ async function saveSettings(event) {
 }
 
 export function bindSettings() {
+  onLanguageChange(() => {
+    if (!dialog.open) return;
+    // Translate generated interval labels without discarding unsaved values.
+    const config = { ...draft, ui_refresh: Number(field('ui_refresh').value),
+      projects_foreground_interval: Number(field('projects_foreground_interval').value),
+      projects_background_enabled: field('projects_background_enabled').checked,
+      intervals: Object.fromEntries([...document.querySelectorAll('[data-interval]')].map(input => [input.dataset.interval, Number(input.value)])) };
+    document.getElementById('settings-intervals').innerHTML = intervalFields(config);
+  });
   field('goaccess_enabled').addEventListener('change', validateGoAccessFields);
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
     if (store.data?.config) applyAppearance(store.data.config);
