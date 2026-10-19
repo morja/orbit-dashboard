@@ -1,4 +1,14 @@
 /* A persistent sidebar indicator and an on-demand panel, outside the page flow. */
+.live-label[data-freshness="stale"],
+.live-label[data-freshness="updating"] {
+  color: var(--amber-text);
+}
+
+.live-label[data-freshness="stale"] .local-dot,
+.live-label[data-freshness="updating"] .local-dot {
+  background: var(--amber-mark);
+}
+
 .sidebar-notices {
   margin-top: auto;
   padding: 16px 0 10px;

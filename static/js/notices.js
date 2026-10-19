@@ -1,5 +1,5 @@
 /* Current dashboard notices live outside the page flow, so updates never move content. */
-import { stale } from './format.js';
+import { projectFreshness } from './freshness.js';
 import { escape, markup } from './html.js';
 import { icon } from './icons.js';
 import { onLanguageChange, systemMessage, t, tHtml } from './i18n.js';
@@ -32,7 +32,7 @@ function currentNotices() {
       add(title, message, href);
     }
     if (data.config?.ddev_enabled && data.ddev?.error) add('DDEV', data.ddev.error, '#docker');
-    if (stale(data.projects_checked_at, 180) && data.projects.length && !data.checking.includes('projects')) {
+    if (projectFreshness(data).stale && data.projects.length && !data.checking.includes('projects')) {
       add('Projects', 'Git and project values are out of date.', '#projects');
     }
   }

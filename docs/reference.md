@@ -158,6 +158,13 @@ The dashboard window asks for new values every 10 seconds, only while
 it is active and visible; this is also configurable. Unchanged values are answered
 with `304 Not Modified` and are not redrawn.
 
+The compact live status shows when projects were last checked, rather than the
+current clock time. While updating older project values, it keeps their age visible;
+overdue values are marked in amber. Staleness allows the configured foreground or
+enabled background interval, at least three minutes, plus 30 seconds of scheduling
+grace. The Notices panel uses the same rule. Running project checks are polled every second
+so their completed results appear promptly when returning to Orbit.
+
 The last project list, Git status, DDEV and Docker values are saved after each check.
 After a restart Orbit shows them immediately, with their original check time, and
 replaces them as fresh checks finish. Saved projects are ignored when project

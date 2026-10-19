@@ -173,3 +173,11 @@ detail links, and live updates while open. Polling preserves link focus and scro
 resolved notices disappear automatically. A connection failure adds a red notice
 and keeps the existing live status visible. Action-specific errors remain beside
 their controls.
+
+The live status uses the last project collector timestamp instead of the current
+clock time. It shows the age of cached project values, marks overdue checks in
+amber, and keeps that age visible while a fresh check runs. The sidebar stale-data
+notice uses the same freshness rule, allowing the configured background interval
+plus a short scheduling grace period. Foreground polling waits for activity
+registration and polls running project checks every second, so completed values appear
+promptly even when the normal UI polling interval is longer.

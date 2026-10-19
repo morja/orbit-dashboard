@@ -1,12 +1,14 @@
 /*
  * Keeping the dashboard current. The window asks for new values only while it is
- * active: every ui_refresh seconds, and every second while the progress bar shows.
+ * active: every ui_refresh seconds, and every second during project checks or
+ * while the progress bar shows.
  * Unchanged state is answered with 304 and not redrawn.
  */
 import { api, fetchState, hasActionKey } from './api.js';
-import { formatTime } from './format.js';
+import { ago, formatTime } from './format.js';
+import { projectFreshness } from './freshness.js';
 import { escape } from './html.js';
-import { t } from './i18n.js';
+import { locale, t } from './i18n.js';
 import { render } from './render.js';
 import { store } from './store.js';
 import { notify } from './toast.js';
@@ -33,12 +35,19 @@ function pageActive() {
 
 function syncActivity() {
   clearTimeout(activityTimer);
-  if (!hasActionKey()) return;
+  if (!hasActionKey()) return Promise.resolve();
   const active = pageActive();
   // Serialize transitions so a delayed foreground message cannot undo a blur.
   // A closing window sends best-effort keepalive; the backend also expires leases.
   activityRequest = activityRequest.then(() => api('/api/activity', { client: activityClient, active }, { keepalive: true })).catch(() => {});
   if (active) activityTimer = setTimeout(syncActivity, 15000);
+  return activityRequest;
+}
+
+function resumeWindow() {
+  if (store.data) updateActivity();
+  // Register the foreground check before reading state, then poll it promptly.
+  return syncActivity().then(poll).finally(schedulePoll);
 }
 
 export const noteRender = () => { lastRender = Date.now(); };
@@ -60,18 +69,39 @@ function activity() {
 
 function activityText(running) {
   const progress = store.data.progress?.projects;
+  const freshness = projectFreshness(store.data);
   if (running.includes('projects')) {
+    if (freshness.checked && freshness.age >= 60) return t('Updating projects · {age}', { age: ago(store.data.projects_checked_at) });
     return progress?.total ? t('Checking projects · {done} of {total}', progress) : t('Finding projects');
   }
   if (running[0] === 'moon') return t('Checking servers');
   const names = { ddev: 'DDEV', docker: 'Docker', services: t('Local services') };
   if (running.length) return t('{name} is being checked', { name: names[running[0]] });
-  return t('Up to date · {time}', { time: formatTime() });
+  if (store.data.projects.length || store.data.config?.sources?.length) {
+    if (!freshness.checked) return t('Waiting for project check');
+    return freshness.stale ? t('Older project data · {age}', { age: ago(store.data.projects_checked_at) })
+      : t('Projects · {age}', { age: ago(store.data.projects_checked_at) });
+  }
+  const checked = new Date(store.data.mac?.checked_at);
+  return Number.isFinite(checked.getTime()) ? t('Up to date · {time}', { time: formatTime(checked) }) : t('Waiting for first check');
 }
 
 export function updateActivity() {
   const { running, prominent } = activity();
-  document.getElementById('live-label').innerHTML = `<span class="local-dot"></span><span>${escape(activityText(running))}</span>`;
+  const freshness = projectFreshness(store.data);
+  const label = document.getElementById('live-label');
+  label.innerHTML = `<span class="local-dot"></span><span>${escape(activityText(running))}</span>`;
+  const hasProjects = Boolean(store.data.projects.length || store.data.config?.sources?.length);
+  let state = 'current';
+  if (hasProjects && running.includes('projects') && freshness.age >= 60) state = 'updating';
+  else if (hasProjects && freshness.stale) state = 'stale';
+  label.dataset.freshness = state;
+  label.title = '';
+  if (hasProjects) {
+    label.title = freshness.checked
+      ? t('Last project check: {time}', { time: freshness.checked.toLocaleString(locale()) })
+      : t('Waiting for project check');
+  }
   const bar = document.getElementById('refresh-progress');
   const progress = store.data.progress?.projects;
   const determinate = running.includes('projects') && progress?.total > 0;
@@ -108,7 +138,8 @@ export async function poll() {
 
 export function schedulePoll() {
   clearTimeout(timer);
-  const seconds = store.data && activity().prominent ? 1 : store.data?.config?.ui_refresh || 10;
+  const current = store.data ? activity() : null;
+  const seconds = current && (current.prominent || current.running.includes('projects')) ? 1 : store.data?.config?.ui_refresh || 10;
   timer = setTimeout(async () => {
     if (pageActive()) await poll();
     schedulePoll();
@@ -134,16 +165,15 @@ export function startRefreshing() {
   document.getElementById('refresh').addEventListener('click', refreshNow);
   window.addEventListener('focus', () => {
     windowActive = true;
-    syncActivity();
-    poll();
+    if (pageActive()) resumeWindow();
   });
   window.addEventListener('blur', () => {
     windowActive = false;
     syncActivity();
   });
   window.addEventListener('orbit-activity', () => {
-    syncActivity();
-    if (pageActive()) poll();
+    if (pageActive()) resumeWindow();
+    else syncActivity();
   });
   window.addEventListener('pagehide', () => {
     pageClosing = true;
@@ -152,12 +182,12 @@ export function startRefreshing() {
   window.addEventListener('pageshow', () => {
     pageClosing = false;
     windowActive = document.hasFocus();
-    syncActivity();
+    if (pageActive()) resumeWindow();
+    else syncActivity();
   });
   document.addEventListener('visibilitychange', () => {
-    syncActivity();
-    if (pageActive()) poll();
+    if (pageActive()) resumeWindow();
+    else syncActivity();
   });
-  syncActivity();
-  poll().finally(schedulePoll);
+  syncActivity().then(poll).finally(schedulePoll);
 }

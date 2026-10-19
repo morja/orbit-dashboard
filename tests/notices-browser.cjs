@@ -43,12 +43,73 @@ const readline = require('node:readline');
     const contentTop = () => page.locator('#content').evaluate(el => el.firstElementChild.getBoundingClientRect().top);
     const initialTop = await contentTop();
     assert(await page.locator('#notices-count').isHidden());
+    const freshnessCases = await page.evaluate(async data => {
+      const { projectFreshness } = await import('/js/freshness.js');
+      const now = Date.now();
+      const delayed = { ...data, projects_checked_at: new Date(now - 9 * 60000).toISOString(),
+        config: { ...data.config, projects_background_enabled: true, intervals: { ...data.config.intervals, projects: 600 } } };
+      return [
+        projectFreshness(delayed, now).stale,
+        projectFreshness({ ...delayed, config: { ...delayed.config, projects_background_enabled: false } }, now).stale,
+        projectFreshness({ ...data, projects_checked_at: 'invalid' }, now).stale,
+      ];
+    }, clean);
+    assert.deepEqual(freshnessCases, [false, true, true], 'Freshness must respect configurable background checks, paused checks and invalid timestamps');
     await button.click();
     assert(await open());
     assert.match(await panel.innerText(), /No current notices/);
     await page.keyboard.press('Escape');
     assert.equal(await open(), false);
     assert(await button.evaluate(el => el === document.activeElement));
+
+    // A normal five-minute background interval must not produce stale warnings.
+    const aging = { ...clean, config: { ...clean.config, projects_background_enabled: true,
+      intervals: { ...clean.config.intervals, projects: 300 } },
+      projects_checked_at: new Date(Date.now() - 4 * 60000).toISOString() };
+    await apply(aging);
+    assert.match(await page.locator('#live-label').innerText(), /Projects · checked 4 min ago/);
+    assert.equal(await page.locator('#live-label').getAttribute('data-freshness'), 'current');
+    assert(await page.locator('#notices-count').isHidden());
+    const old = { ...aging, projects_checked_at: new Date(Date.now() - 20 * 60000).toISOString() };
+    await apply(old);
+    assert.match(await page.locator('#live-label').innerText(), /Older project data · checked 20 min ago/);
+    assert.equal(await page.locator('#live-label').getAttribute('data-freshness'), 'stale');
+    assert.equal(await page.locator('#notices-count').innerText(), '1');
+    await apply({ ...old, checking: ['projects'] });
+    assert.match(await page.locator('#live-label').innerText(), /Updating projects · checked 20 min ago/);
+
+    // Foreground state is fetched after activity registration, then checks are polled quickly.
+    await apply(aging);
+    let activityRegistered = false;
+    let readTooEarly = false;
+    let finishTimer;
+    await page.unroute('**/api/state');
+    await page.route('**/api/state', route => {
+      if (!activityRegistered) readTooEarly = true;
+      return route.fulfill({ json: snapshot });
+    });
+    await page.route('**/api/activity', async route => {
+      if (route.request().postDataJSON().active) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        activityRegistered = true;
+        snapshot = { ...aging, checking: ['projects'] };
+        finishTimer = setTimeout(() => { snapshot = { ...aging, checking: [], projects_checked_at: new Date().toISOString() }; }, 500);
+      }
+      await route.fulfill({ json: { ok: true } });
+    });
+    await page.evaluate(() => {
+      window.orbitWindowActive = true;
+      window.dispatchEvent(new Event('orbit-activity'));
+    });
+    await page.waitForFunction(() => document.getElementById('live-label').textContent.includes('Updating projects'));
+    await page.waitForFunction(() => document.getElementById('live-label').textContent.includes('Projects · just checked'), null, { timeout: 4000 });
+    assert.equal(readTooEarly, false, 'Foreground checks must be registered before fetching cached state');
+    clearTimeout(finishTimer);
+    await page.unroute('**/api/activity');
+    await page.unroute('**/api/state');
+    await page.route('**/api/state', route => route.fulfill({ json: snapshot }));
+    await page.evaluate(() => { delete window.orbitWindowActive; });
+    await apply(clean);
 
     const warning = structuredClone(clean);
     warning.ddev.error = 'DDEV is unavailable. Docker may be stopped or unreachable.';
@@ -130,6 +191,7 @@ const readline = require('node:readline');
               await button.click();
               assert(await open());
               assert.match(await panel.locator('h2').innerText(), language === 'en' ? /Notices/ : /Hinweise/);
+              assert.match(await page.locator('#live-label').innerText(), language === 'en' ? /Older project data/ : /Ältere Projektwerte/);
               await page.waitForFunction(() => {
                 const box = document.getElementById('notices-panel').getBoundingClientRect();
                 return box.x >= 0 && box.y >= 0 && box.right <= innerWidth + 1 && box.bottom <= innerHeight + 1;

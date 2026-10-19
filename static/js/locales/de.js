@@ -191,6 +191,12 @@ export default {
   'Finding projects': 'Projekte werden gesucht',
   '{name} is being checked': '{name} wird geprüft',
   'Up to date · {time}': 'Aktuell · {time}',
+  'Projects · {age}': 'Projekte · {age}',
+  'Older project data · {age}': 'Ältere Projektwerte · {age}',
+  'Updating projects · {age}': 'Projekte werden aktualisiert · {age}',
+  'Last project check: {time}': 'Letzte Projektprüfung: {time}',
+  'Waiting for project check': 'Projektprüfung steht aus',
+  'Waiting for first check': 'Erste Prüfung steht aus',
   'Connection lost': 'Verbindung unterbrochen',
   'Request failed': 'Anfrage fehlgeschlagen',
 
