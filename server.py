@@ -6,6 +6,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer as StandardThreadingHTTPServer
 from pathlib import Path
+from socketserver import TCPServer
 from urllib.parse import urlparse, parse_qs
 import local_services
 from goaccess_integration import GoAccessCache, readable_report
@@ -40,6 +41,12 @@ class ThreadingHTTPServer(StandardThreadingHTTPServer):
     # Browsers request many modules and stylesheets together. The stdlib queue
     # of five can reset these connections before the accept loop catches up.
     request_queue_size = 128
+
+    def server_bind(self):
+        # Orbit listens on a numeric local address. Resolving its name can block
+        # startup on machines without working reverse DNS and serves no purpose.
+        TCPServer.server_bind(self)
+        self.server_name, self.server_port = self.server_address[:2]
 
 
 def stamp():

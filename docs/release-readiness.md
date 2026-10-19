@@ -101,6 +101,8 @@ incremental project checks with periodic full checks, a sidebar Notices panel an
 an accurate project-data age in the header. Returning to Orbit registers window
 activity before requesting current values and polls running project checks promptly.
 Background checks remain configurable; the default interval is five minutes.
+Local server startup also avoids reverse DNS, which stalled the synthetic browser
+fixture on the GitHub macOS runner and can delay startup on other machines.
 
 All four README screenshots were regenerated from synthetic data and visually
 reviewed. The release workflow tests the exact committed source export before
