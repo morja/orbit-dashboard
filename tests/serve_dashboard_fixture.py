@@ -5,6 +5,10 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import json
 import sys
+import faulthandler
+
+# Report a slow fixture's exact wait without exposing its generated action key.
+faulthandler.dump_traceback_later(8, repeat=True)
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -122,6 +126,7 @@ def main():
 
         http = server.ThreadingHTTPServer(('127.0.0.1', 0), server.Handler)
         http.dashboard = dashboard
+        faulthandler.cancel_dump_traceback_later()
         print(json.dumps({'url': 'http://127.0.0.1:' + str(http.server_address[1]), 'key': dashboard.action_key}), flush=True)
         try:
             http.serve_forever()
