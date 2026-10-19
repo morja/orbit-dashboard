@@ -93,3 +93,18 @@ from a clean committed export; run Python, frontend and browser checks against t
 exact export before publishing. Native code is unchanged from Preview 2, so this
 release retains its native-lifecycle evidence and compatibility limits rather than
 claiming another native build or a second-Mac rehearsal.
+
+## Developer Preview 4
+
+Prepared on 19 October 2026. This preview adds optional GoAccess traffic reports,
+incremental project checks with periodic full checks, a sidebar Notices panel and
+an accurate project-data age in the header. Returning to Orbit registers window
+activity before requesting current values and polls running project checks promptly.
+Background checks remain configurable; the default interval is five minutes.
+
+All four README screenshots were regenerated from synthetic data and visually
+reviewed. The release workflow tests the exact committed source export before
+creating a draft. Native focus handling changed since Preview 3, so the release
+also requires an isolated native build and lifecycle checks before publication.
+Release notes record the completed validation. The source-only distribution,
+second-Mac rehearsal and minimum-version compatibility limits above still apply.

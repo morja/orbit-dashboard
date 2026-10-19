@@ -47,7 +47,7 @@ This is a **macOS source distribution**. You need Python 3.10 or newer and Git f
 Git status. Docker, DDEV, Colima and SSH are optional. The native window also needs
 Apple Command Line Tools. Node.js is only needed for frontend development checks.
 
-Download the [Developer Preview](https://github.com/morja/orbit-dashboard/releases/tag/v0.1.0-preview.3)
+Download the [Developer Preview](https://github.com/morja/orbit-dashboard/releases/tag/v0.1.0-preview.4)
 or clone the [repository](https://github.com/morja/orbit-dashboard):
 
 ```sh
@@ -174,7 +174,7 @@ in [docs/screenshots/README.md](docs/screenshots/README.md).
 
 ## Release status and license
 
-[Developer Preview v0.1.0-preview.3](https://github.com/morja/orbit-dashboard/releases/tag/v0.1.0-preview.3)
+[Developer Preview v0.1.0-preview.4](https://github.com/morja/orbit-dashboard/releases/tag/v0.1.0-preview.4)
 is a macOS source release, available under MIT. This repository starts with a clean
 source snapshot and fresh history. It includes no personal settings or workspace data.
 The native setup still needs validation on a second Mac. Signed standalone downloads
