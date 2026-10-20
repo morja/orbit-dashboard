@@ -51,3 +51,37 @@ The report renderer preserves the isolated iframe and GoAccess controls. It uses
 GoAccess's built-in bright/darkGray themes, full-width panels, 10 rows per page,
 visible tables on small screens, readable typography and an inline stylesheet
 from static/css/goaccess-report.css. No external theme assets are fetched.
+
+## Page overview
+
+Web traffic opens the first saved website in **Visited pages**. This view reads
+the JSON request panel embedded in the selected period's HTML report, without
+running its scripts or contacting the server. Existing cached reports work without
+a new export. The **Technical report** button opens the original isolated report.
+
+The page table shows GET request counts and GoAccess's estimated visitors per
+content path. Asset extensions, asset directories, Livewire endpoints, language
+switches, API routes, admin pages and common health/authentication endpoints are
+excluded, including under `/en` and `/de`. These are path-based classification
+rules, not evidence that a human read a page. Downloads such as PDFs are excluded
+from this content overview and remain available in the technical report.
+
+Search, sort and pagination operate on the saved data. Query strings are removed
+so campaign variants share one path. The optional English/German grouping removes
+only the leading `/en` or `/de` prefix and adds request counts; it does not translate
+stored paths. Case and trailing slashes remain distinct. Visitors are never added
+across query, protocol or language variants because those audiences can overlap;
+combined rows show an em dash instead. There is no summed visitor metric for pages.
+
+The website cards explicitly show **All requests**, including technical traffic.
+The page overview's **Page requests** and **Different pages** metrics use the filtered
+URL rows, independent of search and pagination. GoAccess's embedded request panel
+does not contain per-URL response statuses or bot identities, so bots, redirects
+and failed requests can remain in these estimates. In particular, `/` can include
+redirects. Current unrotated logs remain excluded, as for the technical report.
+
+When GoAccess exports fewer rows than its request metadata declares, the overview
+shows a partial-data notice and totals only available rows. Missing or unsupported
+embedded data shows an unavailable message rather than a zero-traffic claim. To
+retain more URLs in future reports, review GoAccess's `--max-items` setting in the
+server's report preparation; Orbit does not change it or reconstruct missing history.

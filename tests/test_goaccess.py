@@ -8,9 +8,21 @@ from types import SimpleNamespace
 
 from goaccess_integration import GoAccessCache
 from orbit_config import validate
+from test_goaccess_pages import report, row
 
 
 class GoAccessTests(unittest.TestCase):
+    def test_pages_read_only_the_selected_cached_period(self):
+        with tempfile.TemporaryDirectory() as directory:
+            cache = GoAccessCache(directory)
+            with patch.object(cache, 'report', return_value=report([row('/en/teachers', 310, 70)])) as saved:
+                with patch('goaccess_integration.subprocess.run') as remote:
+                    pages = cache.pages('site', '7')
+                    remote.assert_not_called()
+                saved.assert_called_once_with('site', '7')
+                self.assertEqual(pages['requests'], 310)
+                self.assertEqual(pages['rows'][0]['visitors'], 70)
+
     def config(self):
         return {'enabled': True, 'host': 'synthetic-server', 'command': '/srv/analytics/export'}
 

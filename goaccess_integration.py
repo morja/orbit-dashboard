@@ -10,6 +10,8 @@ import subprocess
 import tempfile
 import threading
 
+from goaccess_pages import page_requests
+
 
 class GoAccessCache:
     def __init__(self, directory):
@@ -38,6 +40,10 @@ class GoAccessCache:
             return (self.directory / metadata['file']).read_bytes()
         except OSError:
             return None
+
+    def pages(self, identifier, period='all'):
+        # Read only the saved report. Opening the page overview never uses SSH.
+        return page_requests(self.report(identifier, period))
 
     def refresh(self, config):
         if not config['enabled']:

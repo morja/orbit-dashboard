@@ -29,6 +29,8 @@ Python's standard library powers the backend; a small Swift app provides the nat
   Opt in to read-only system queries without installing anything on the server,
   use an existing status command, or combine both.
 - **Optional GoAccess reports.** Download prepared website reports over SSH.
+  See content page request counts in a searchable table, filter out technical
+  traffic and optionally combine English/German paths. Keep the full technical report available.
   Configure the read-only export in Settings → Tools. No tracking script or server
   changes are made by Orbit. See [the integration guide](docs/goaccess.md).
 - **An interface you can adjust.** Light, dark and system appearance, five palettes,

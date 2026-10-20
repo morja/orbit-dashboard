@@ -49,6 +49,44 @@
 .goaccess-footnote p { margin: 3px 0; font-size: var(--font-caption); }
 .goaccess-report { width: 100%; min-height: 75vh; border: 0; background: white; }
 
+.goaccess-pages { min-width: 0; }
+.goaccess-pages > .notice { margin: 0 0 15px; }
+.goaccess-view-switch { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+.goaccess-view-switch [aria-pressed="true"] { background: var(--active); color: var(--accent-text); border-color: var(--green); }
+.goaccess-page-metrics { display: flex; flex-wrap: wrap; gap: 16px 48px; margin: 0 0 12px; }
+.goaccess-page-metrics dt { font-size: var(--font-secondary); color: var(--muted); }
+.goaccess-page-metrics dd { margin: 4px 0 0; font-size: var(--font-dialog-title); font-weight: 550; font-variant-numeric: tabular-nums; }
+.goaccess-page-description { font-size: var(--font-secondary); margin: 0 0 20px; }
+.goaccess-page-filters { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; margin-bottom: 15px; }
+.goaccess-page-filters > label { display: flex; flex-direction: column; gap: 6px; font-size: var(--font-secondary); color: var(--muted); min-width: 0; }
+.goaccess-page-search { flex: 1 1 200px; }
+.goaccess-page-filters input[type="search"],
+.goaccess-page-filters select { box-sizing: border-box; min-height: 34px; width: 100%; padding: 6px 9px; font: inherit; color: var(--text); background: var(--paper); border: 1px solid var(--line); border-radius: calc(var(--radius) / 2); }
+.goaccess-page-filters > .goaccess-page-merge { flex-direction: row; align-items: center; min-height: 34px; color: var(--text); }
+.goaccess-page-merge input { margin: 0; accent-color: var(--green); }
+.goaccess-page-table { table-layout: fixed; white-space: normal; }
+.goaccess-page-table th:first-child { width: 56%; }
+.goaccess-page-table th:not(:first-child) { width: 22%; text-align: right; letter-spacing: normal; }
+.goaccess-page-table td { vertical-align: top; font-size: var(--font-body); }
+.goaccess-page-path { overflow-wrap: anywhere; font-weight: 550; }
+.goaccess-page-variants { font-size: var(--font-caption); margin-top: 4px; overflow-wrap: anywhere; }
+.goaccess-page-count, .goaccess-page-visitors { text-align: right; font-variant-numeric: tabular-nums; }
+.goaccess-page-count > span:first-child { font-weight: 550; }
+.goaccess-page-bar { display: block; width: 100%; height: 3px; background: var(--soft); border-radius: 2px; margin-top: 7px; }
+.goaccess-page-bar::before { content: ''; display: block; width: var(--page-share); height: 100%; background: var(--green); border-radius: inherit; }
+.goaccess-page-pagination { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 12px; font-size: var(--font-caption); }
+.goaccess-page-pagination > div { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.goaccess-page-pagination .button { font-size: var(--font-secondary); padding: 6px 10px; }
+.goaccess-page-note { font-size: var(--font-caption); line-height: 1.6; margin: 12px 0 0; }
+
 @media (max-width: 1280px) { .goaccess-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 1000px) { .goaccess-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 700px) { .goaccess-grid { grid-template-columns: 1fr; } }
+@media (max-width: 700px) {
+  .goaccess-grid { grid-template-columns: 1fr; }
+  .goaccess-pages > .section-heading { flex-wrap: wrap; }
+  .goaccess-pages > .section-heading h2 { overflow-wrap: anywhere; min-width: 0; }
+  .goaccess-page-table th:first-child { width: 48%; }
+  .goaccess-page-table th:not(:first-child) { width: 26%; }
+  .goaccess-page-table td, .goaccess-page-table th { padding: 10px 7px; }
+  .goaccess-page-filters > label { flex-grow: 1; }
+}

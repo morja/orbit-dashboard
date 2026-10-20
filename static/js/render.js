@@ -59,8 +59,8 @@ export function render({ force = false } = {}) {
   const content = document.getElementById('content');
   const focus = document.activeElement;
   // Redrawing would close an open select in the content.
-  if (focus?.tagName === 'SELECT' && content.contains(focus)) return;
-  const searchId = focus?.id === 'search' || focus?.dataset?.listQuery || focus?.id === 'services-search' ? focus.id : null;
+  if (!force && focus?.tagName === 'SELECT' && content.contains(focus)) return;
+  const searchId = focus?.id === 'search' || focus?.dataset?.listQuery || focus?.id === 'services-search' || focus?.id === 'goaccess-search' ? focus.id : null;
   const searchSelection = searchId ? [focus.selectionStart, focus.selectionEnd] : null;
 
   renderHeading(store.view);

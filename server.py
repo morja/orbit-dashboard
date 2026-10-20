@@ -900,6 +900,10 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         if path == "/api/goaccess":
             return self.send(self.server.dashboard.goaccess.read())
+        pages = re.fullmatch(r"/api/goaccess/pages/([a-z0-9-]+)", path)
+        if pages:
+            query = parse_qs(urlparse(self.path).query)
+            return self.send(self.server.dashboard.goaccess.pages(pages[1], query.get('period', ['all'])[0]))
         report = re.fullmatch(r"/api/goaccess/reports/([a-z0-9-]+)", path)
         if report:
             query = parse_qs(urlparse(self.path).query)
