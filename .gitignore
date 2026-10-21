@@ -6,6 +6,8 @@ __pycache__/
 config.json
 AGENTS.local.md
 node_modules/
+# Browser checks pin Playwright exactly; CI installs without a lockfile.
+package-lock.json
 
 # Local editor and build artifacts.
 .idea/
