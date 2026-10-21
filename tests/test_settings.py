@@ -113,6 +113,19 @@ class ConfigurationTest(unittest.TestCase):
             self.assertEqual(reloaded['projects_foreground_interval'], 60)
             self.assertFalse(reloaded['projects_background_enabled'])
 
+    def test_tool_background_interval_validates_without_changing_foreground_intervals(self):
+        self.assertEqual(validate({})['tools_background_interval'], 300)
+        for value in (True, 14, 86401, 300.5, '300'):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                validate({'tools_background_interval': value})
+        with TemporaryDirectory() as tmp:
+            settings = Settings(Path(tmp) / 'settings.json')
+            settings.save({'tools_background_interval': 600})
+            config = Settings(settings.path).value
+            self.assertEqual(config['tools_background_interval'], 600)
+            self.assertEqual(config['intervals']['ddev'], 60)
+            self.assertEqual(config['intervals']['docker'], 120)
+
     def test_full_project_check_interval_validates_and_persists(self):
         self.assertEqual(validate({})['project_full_check_interval'], 1800)
         for value in (True, 299, 86401, 1800.5, '1800'):

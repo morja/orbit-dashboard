@@ -126,7 +126,13 @@ project discovery, Git, last-changed and folder-size checks while no authenticat
 Orbit window is active. Returning to the foreground checks projects immediately;
 checks already running finish normally. The foreground interval and background
 interval are independently editable. Manual Refresh still works while paused.
-Other enabled integrations keep their own schedules.
+
+**Tools in the background**, under Settings → Advanced, sets a minimum interval
+for Docker, DDEV and local service checks while no authenticated window is active.
+It defaults to 300 seconds. Longer configured tool intervals are preserved. Returning
+to Orbit immediately starts any tool checks due at their normal foreground intervals;
+heartbeats and additional windows do not force duplicate checks. Manual Refresh
+still checks tools immediately. Mac storage and SSH server checks keep their own schedules.
 
 Foreground windows report activity every 15 seconds. Closed or disconnected
 windows expire after 45 seconds, and each window has its own activity identity.

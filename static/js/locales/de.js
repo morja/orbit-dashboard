@@ -224,6 +224,9 @@ export default {
   'Foreground project checks must be between 15 and 86400 seconds': 'Projektprüfungen im Vordergrund müssen zwischen 15 und 86400 Sekunden liegen',
   'Full project checks': 'Vollständige Projektprüfungen',
   'Seconds, to catch missed file changes': 'Sekunden, um verpasste Dateiänderungen zu erfassen',
+  'Tools in the background': 'Tools im Hintergrund',
+  'Minimum seconds between Docker, DDEV and local service checks while the window is inactive.': 'Mindestabstand in Sekunden für Docker, DDEV und lokale Dienste, solange das Fenster inaktiv ist.',
+  'Background tool checks must be between 15 and 86400 seconds': 'Hintergrundprüfungen der Tools müssen zwischen 15 und 86400 Sekunden liegen',
   'Full project checks must be between 300 and 86400 seconds': 'Vollständige Projektprüfungen müssen zwischen 300 und 86400 Sekunden liegen',
   // Times and refresh
   'not checked yet': 'noch nicht geprüft',

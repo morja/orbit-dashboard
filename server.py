@@ -504,12 +504,21 @@ class Dashboard:
             if returning:
                 # Heartbeats keep the foreground interval; a returning window refreshes now.
                 self.schedule('projects', self.collect_projects, True)
+                # Tool values can be older after a background interval. Catch up
+                # only when due; multiple windows and heartbeats must not force work.
+                for name in ('ddev', 'docker', 'services'):
+                    if self.config[name + '_enabled']:
+                        self.schedule(name, getattr(self, 'collect_' + name))
 
     def schedule(self, name, fn, force=False):
         with self.lock:
             if name in ('projects', 'sizes') and not force and not self.project_checks_active():
                 return
             interval = self.config['intervals'][name]
+            if name in ('ddev', 'docker', 'services'):
+                self.project_checks_active()  # Expire disconnected foreground leases.
+                if not self.foreground_clients:
+                    interval = max(interval, self.config['tools_background_interval'])
             if name == 'projects' and self.foreground_clients:
                 interval = self.config['projects_foreground_interval']
             if name == 'projects':

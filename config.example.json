@@ -32,6 +32,7 @@
   "ui_refresh": 10,
   "projects_foreground_interval": 60,
   "project_full_check_interval": 1800,
+  "tools_background_interval": 300,
   "projects_background_enabled": true,
   "theme": "system",
   "palette": "orbit",

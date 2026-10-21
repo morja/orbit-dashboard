@@ -154,6 +154,60 @@ class CollectorsTest(unittest.TestCase):
             finally:
                 dashboard.pool.shutdown()
 
+    def test_tools_wait_five_minutes_in_background_and_catch_up_on_return(self):
+        with TemporaryDirectory() as tmp:
+            config = {**defaults(), 'ddev_enabled': True, 'docker_enabled': True, 'services_enabled': True}
+            dashboard = Dashboard(Store(tmp), config)
+            names = ('ddev', 'docker', 'services')
+            try:
+                dashboard.last.update({name: 1000 for name in names})
+                with patch('server.time.monotonic', return_value=100), patch('server.time.time', return_value=1120), patch.object(dashboard.pool, 'submit') as submit:
+                    for name in names:
+                        dashboard.schedule(name, getattr(dashboard, 'collect_' + name))
+                    submit.assert_not_called()
+                    dashboard.set_activity('a' * 32, True)
+                    self.assertEqual(dashboard.active, {'projects', *names})
+                    self.assertEqual(submit.call_count, 4)
+                    # Heartbeats and a second window must not duplicate checks.
+                    dashboard.set_activity('a' * 32, True)
+                    dashboard.set_activity('b' * 32, True)
+                    self.assertEqual(submit.call_count, 4)
+                dashboard.active.clear()
+                with patch('server.time.monotonic', return_value=146), patch('server.time.time', return_value=1299), patch.object(dashboard.pool, 'submit') as submit:
+                    for name in names:
+                        dashboard.schedule(name, getattr(dashboard, 'collect_' + name))
+                    submit.assert_not_called()
+                    self.assertEqual(dashboard.foreground_clients, {})
+                with patch('server.time.time', return_value=1300), patch.object(dashboard.pool, 'submit') as submit:
+                    for name in names:
+                        dashboard.schedule(name, getattr(dashboard, 'collect_' + name))
+                    self.assertEqual(submit.call_count, 3)
+            finally:
+                dashboard.pool.shutdown()
+
+    def test_tools_keep_longer_intervals_and_manual_refresh_while_inactive(self):
+        with TemporaryDirectory() as tmp:
+            config = defaults()
+            config['intervals']['ddev'] = 600
+            dashboard = Dashboard(Store(tmp), config)
+            try:
+                dashboard.last['ddev'] = 1000
+                with patch('server.time.time', return_value=1300), patch.object(dashboard.pool, 'submit') as submit:
+                    dashboard.schedule('ddev', dashboard.collect_ddev)
+                    submit.assert_not_called()
+                    dashboard.schedule('ddev', dashboard.collect_ddev, True)
+                    submit.assert_called_once()
+                dashboard.active.clear()
+                dashboard.config['tools_background_interval'] = 900
+                with patch('server.time.time', return_value=1600), patch.object(dashboard.pool, 'submit') as submit:
+                    dashboard.schedule('ddev', dashboard.collect_ddev)
+                    submit.assert_not_called()
+                with patch('server.time.time', return_value=1900), patch.object(dashboard.pool, 'submit') as submit:
+                    dashboard.schedule('ddev', dashboard.collect_ddev)
+                    submit.assert_called_once()
+            finally:
+                dashboard.pool.shutdown()
+
     def test_project_checks_pause_expire_and_refresh_on_foreground_return(self):
         with TemporaryDirectory() as tmp:
             config = {**defaults(), 'projects_background_enabled': False}

@@ -189,6 +189,9 @@ function intervalFields(config) {
     <label>
       ${tHtml('Full project checks')}<input type="number" id="setting-project_full_check_interval" min="300" max="86400" required value="${config.project_full_check_interval}"><span class="muted">${tHtml('Seconds, to catch missed file changes')}</span>
     </label>
+    <label>
+      ${tHtml('Tools in the background')}<input type="number" id="setting-tools_background_interval" min="15" max="86400" required value="${config.tools_background_interval}"><span class="muted">${tHtml('Minimum seconds between Docker, DDEV and local service checks while the window is inactive.')}</span>
+    </label>
     <label class="settings-toggle"><input type="checkbox" id="setting-projects_background_enabled" ${config.projects_background_enabled ? 'checked' : ''}>${tHtml('Check projects in the background')}</label>
     <p class="muted">${tHtml('When disabled, project and folder-size checks pause in the background. Returning to the foreground checks projects immediately. Checks already running finish normally.')}</p>
   `;
@@ -304,6 +307,7 @@ function collectSettings() {
   config.ui_refresh = Number(field('ui_refresh').value);
   config.projects_foreground_interval = Number(field('projects_foreground_interval').value);
   config.project_full_check_interval = Number(field('project_full_check_interval').value);
+  config.tools_background_interval = Number(field('tools_background_interval').value);
   config.projects_background_enabled = field('projects_background_enabled').checked;
   config.intervals = Object.fromEntries([...document.querySelectorAll('[data-interval]')].map((input) => [input.dataset.interval, Number(input.value)]));
   return config;
@@ -336,6 +340,7 @@ export function bindSettings() {
     const config = { ...draft, ui_refresh: Number(field('ui_refresh').value),
       projects_foreground_interval: Number(field('projects_foreground_interval').value),
       project_full_check_interval: Number(field('project_full_check_interval').value),
+      tools_background_interval: Number(field('tools_background_interval').value),
       projects_background_enabled: field('projects_background_enabled').checked,
       intervals: Object.fromEntries([...document.querySelectorAll('[data-interval]')].map(input => [input.dataset.interval, Number(input.value)])) };
     document.getElementById('settings-intervals').innerHTML = intervalFields(config);
