@@ -30,7 +30,10 @@ Python's standard library powers the backend; a small Swift app provides the nat
   use an existing status command, or combine both.
 - **Optional GoAccess reports.** Download prepared website reports over SSH.
   See content page request counts in a searchable table, filter out technical
-  traffic and optionally combine English/German paths. Keep the full technical report available.
+  traffic and optionally combine English/German paths. With the optional server
+  export extension, select today, yesterday or a date to see daily visitors and
+  the pages they requested, including the current log. The full technical report
+  remains available for date ranges.
   Configure the read-only export in Settings → Tools. No tracking script or server
   changes are made by Orbit. See [the integration guide](docs/goaccess.md).
 - **An interface you can adjust.** Light, dark and system appearance, five palettes,

@@ -3,6 +3,7 @@ from html.parser import HTMLParser
 import json
 import re
 from urllib.parse import unquote, urlsplit
+import datetime as dt
 
 
 # Match file types, rather than every dotted path: article slugs may contain dots.
@@ -19,6 +20,17 @@ TECHNICAL_PATH = re.compile(
     re.IGNORECASE,
 )
 ASSIGNMENT = re.compile(r'\b(?:var|let|const)\s+(?:json_data|appData)\s*=\s*')
+
+
+def content_path(value):
+    path = page_path(value)
+    if path is None:
+        return None
+    decoded = unquote(path)
+    classified = re.sub(r'^/(?:en|de)(?=/|$)', '', decoded, flags=re.IGNORECASE) or '/'
+    if ASSET_EXTENSION.search(decoded) or TECHNICAL_PATH.search(classified):
+        return None
+    return path
 
 
 class ReportDataParser(HTMLParser):
@@ -104,10 +116,7 @@ def page_requests(body):
         if hits is None or path is None:
             incomplete = True
             continue
-        decoded = unquote(path)
-        # Locale prefixes do not make an admin or asset URL an article.
-        classified = re.sub(r'^/(?:en|de)(?=/|$)', '', decoded, flags=re.IGNORECASE) or '/'
-        if row.get('method') != 'GET' or ASSET_EXTENSION.search(decoded) or TECHNICAL_PATH.search(classified):
+        if row.get('method') != 'GET' or content_path(path) is None:
             excluded += hits
             continue
         page = pages.setdefault(path, {'path': path, 'requests': 0, 'visitors': None, 'variants': 0})
@@ -123,3 +132,25 @@ def page_requests(body):
     result = sorted(pages.values(), key=lambda page: (-page['requests'], page['path']))
     return {'available': True, 'rows': result, 'requests': sum(page['requests'] for page in result),
             'excludedRequests': excluded, 'partial': partial}
+
+
+def daily_totals(body):
+    """Legacy reports have daily totals, but no daily URL breakdown."""
+    parser = ReportDataParser()
+    if not body or len(body) > 10_000_000:
+        return None
+    try:
+        parser.feed(body.decode('utf-8', errors='replace'))
+        panel = (parser.payload or {}).get('visitors', {})
+        rows = panel.get('data', [])
+        days = []
+        for row in rows:
+            date = dt.datetime.strptime(row['data'], '%Y%m%d').date().isoformat()
+            hits, visitors = count(row.get('hits')), count(row.get('visitors'))
+            if hits is None or visitors is None:
+                return None
+            days.append({'date': date, 'requests': hits, 'visitors': visitors, 'pagesAvailable': False})
+        return {'scope': 'all-requests', 'timezone': None, 'includesCurrentLog': False,
+                'days': sorted(days, key=lambda day: day['date'])} if days else None
+    except (ValueError, TypeError, KeyError, AttributeError, RecursionError):
+        return None

@@ -72,6 +72,16 @@ export function render({ force = false } = {}) {
   noteRender();
   content.innerHTML = views[store.view]();
   fitProjectPaths();
+  if (store.view === 'goaccess') {
+    const chart = content.querySelector('.goaccess-day-chart');
+    const selectedDay = chart?.querySelector('[aria-pressed="true"]');
+    if (selectedDay) {
+      const container = chart.getBoundingClientRect();
+      const day = selectedDay.getBoundingClientRect();
+      if (day.right > container.right) chart.scrollLeft += day.right - container.right + 2;
+      if (day.left < container.left) chart.scrollLeft -= container.left - day.left + 2;
+    }
+  }
   content.setAttribute('aria-busy', 'false');
   if (searchSelection) {
     const search = document.getElementById(searchId);

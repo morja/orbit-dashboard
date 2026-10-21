@@ -3,6 +3,24 @@
  * filled at runtime. Plural forms use the categories of Intl.PluralRules.
  */
 export default {
+  'Today': 'Heute',
+  'Yesterday': 'Gestern',
+  'Specific day': 'Bestimmter Tag',
+  'Date': 'Datum',
+  'Visitors by day': 'Besucher pro Tag',
+  'Report dates': 'Berichtstage',
+  'Estimated visitors to successful content pages. Select a day to see its pages.': 'Geschätzte Besucher erfolgreich aufgerufener Inhaltsseiten. Wähle einen Tag, um seine Seiten zu sehen.',
+  'These daily totals include all requests and bots. Page details need a daily server export.': 'Diese Tageszahlen enthalten alle Anfragen und Bots. Für Seitendetails ist ein Tagesexport vom Server nötig.',
+  '{date}: {visitors} visitors, {requests} requests': '{date}: {visitors} Besucher, {requests} Anfragen',
+  'Daily snapshot': 'Stand der Tagesauswertung',
+  'Includes the current log up to this snapshot. Load reports again after sharing a page.': 'Enthält auch das laufende Log bis zu diesem Stand. Lade die Berichte nach dem Teilen einer Seite erneut.',
+  'The current log is not included in this export.': 'Das laufende Log ist in diesem Export noch nicht enthalten.',
+  'No saved data for this day.': 'Keine gespeicherten Daten für diesen Tag.',
+  'Daily counts use the saved snapshot. Missing data is shown as unavailable, not zero.': 'Tageszahlen gelten für den gespeicherten Stand. Fehlende Daten erscheinen als nicht verfügbar, nicht als null.',
+  'No saved data for this day. Load reports to get a newer snapshot.': 'Keine gespeicherten Daten für diesen Tag. Lade die Berichte für einen neueren Stand.',
+  'Daily page details require an updated server export. The chart still shows the available daily visitor totals.': 'Für Seiten pro Tag muss der Serverexport aktualisiert werden. Der Verlauf zeigt weiterhin die vorhandenen Besucherzahlen pro Tag.',
+  'Successful GET requests to content pages. Assets, redirects, errors and technical endpoints are excluded.': 'Erfolgreiche GET-Anfragen an Inhaltsseiten. Assets, Weiterleitungen, Fehler und technische Aufrufe sind herausgefiltert.',
+  'Visitors are daily estimates based on the logged address and browser. Bots can remain. Visitors are deduplicated within each page and across the day.': 'Besucher sind tägliche Schätzungen anhand der protokollierten Adresse und des Browsers. Bots können enthalten sein. Besucher werden je Seite und für den gesamten Tag nur einmal gezählt.',
   'All requests': 'Alle Anfragen',
   'Visited pages': 'Besuchte Seiten',
   'Technical report': 'Technischer Bericht',
@@ -50,7 +68,7 @@ export default {
   "Local copy": "Lokale Kopie",
   "GoAccess prepares reports on your server. Orbit only downloads them over SSH.": "GoAccess erstellt die Berichte auf deinem Server. Orbit lädt sie ausschließlich per SSH herunter.",
   "Configure an SSH alias and a read-only export executable. No server changes are made by Orbit.": "Konfiguriere einen SSH-Alias und einen lesenden Export-Befehl. Orbit verändert nichts auf dem Server.",
-  "Counts use the selected period. Current unrotated logs are excluded; visitors are daily estimates including bots.": "Die Zahlen gelten für den gewählten Zeitraum. Laufende Logs fehlen noch; Besucher sind tägliche Schätzungen einschließlich Bots.",
+  'Date-range totals use prepared reports without the current log. The daily chart uses its own snapshot shown below.': 'Zeitraumsummen verwenden vorbereitete Berichte ohne das laufende Log. Der Tagesverlauf nutzt den unten angegebenen eigenen Datenstand.',
 
   'Clean': 'Keine Änderungen',
   'Git status': 'Git-Status',

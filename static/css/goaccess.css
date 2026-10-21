@@ -79,6 +79,19 @@
 .goaccess-page-pagination .button { font-size: var(--font-secondary); padding: 6px 10px; }
 .goaccess-page-note { font-size: var(--font-caption); line-height: 1.6; margin: 12px 0 0; }
 
+.goaccess-period input[type="date"] { width: auto; padding: 5px 8px; font: inherit; color: var(--text); background: var(--paper); border: 1px solid var(--line); border-radius: calc(var(--radius) / 2); }
+.goaccess-daily { margin: 0 0 24px; padding-bottom: 20px; border-bottom: 1px solid var(--line); min-width: 0; }
+.goaccess-daily .section-heading { margin-bottom: 6px; }
+.goaccess-day-chart { display: flex; overflow-x: auto; gap: 4px; margin-top: 16px; padding: 2px; }
+.goaccess-day { flex: 1 0 25px; min-width: 0; padding: 5px 2px; color: var(--muted); background: transparent; border: 1px solid transparent; border-radius: 4px; cursor: pointer; }
+.goaccess-day:hover, .goaccess-day[aria-pressed="true"] { border-color: var(--green); background: var(--active); color: var(--accent-text); }
+.goaccess-day:focus-visible { outline: 2px solid var(--green); outline-offset: 1px; }
+.goaccess-day-value { display: block; font-size: var(--font-caption); font-variant-numeric: tabular-nums; }
+.goaccess-day-track { display: flex; align-items: end; justify-content: center; height: 90px; margin: 8px 0; }
+.goaccess-day-track > span { display: block; width: 100%; max-width: 20px; min-height: 0; border-radius: 3px 3px 0 0; background: var(--green); }
+.goaccess-day-label { display: block; font-size: var(--font-caption); }
+.goaccess-day-range { display: flex; justify-content: space-between; gap: 12px; margin-top: 6px; font-size: var(--font-caption); }
+
 @media (max-width: 1280px) { .goaccess-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 1000px) { .goaccess-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 700px) {

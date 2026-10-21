@@ -12,13 +12,13 @@ export function clearPageOverview() {
   results.clear();
 }
 
-export async function loadPageOverview(key, report, redraw) {
+export async function loadPageOverview(key, report, date, redraw) {
   if (!key || results.has(key)) return;
   const result = {loading: true};
   results.set(key, result);
   redraw();
   try {
-    result.data = await api(`/api/goaccess/pages/${encodeURIComponent(report)}?period=${store.trafficSelection.period}`);
+    result.data = await api(`/api/goaccess/pages/${encodeURIComponent(report)}?period=${store.trafficSelection.period}${date ? '&date=' + encodeURIComponent(date) : ''}`);
   } catch (error) {
     result.error = error.message;
   } finally {
@@ -45,7 +45,7 @@ function groupedPages(rows, merged) {
   return [...groups.values()];
 }
 
-export function pageOverview(key) {
+export function pageOverview(key, daily = false) {
   const result = results.get(key);
   if (!result || result.loading) return `<p class="muted" role="status">${tHtml('Loading page overview…')}</p>`;
   if (result.error) return markup`<p role="status" class="notice">${escape(result.error)}</p>
@@ -68,9 +68,10 @@ export function pageOverview(key) {
     ${data.partial ? `<p class="notice goaccess-page-note" role="status">${tHtml('The URL list may be incomplete. Counts cover the available rows.')}</p>` : ''}
     <dl class="goaccess-page-metrics">
       <div><dt>${tHtml('Page requests')}</dt><dd>${number(data.requests)}</dd></div>
+      ${daily ? `<div><dt>${tHtml('Estimated visitors')}</dt><dd>${number(data.visitors)}</dd></div>` : ''}
       <div><dt>${tHtml('Different pages')}</dt><dd>${number(all.length)}</dd></div>
     </dl>
-    <p class="muted goaccess-page-description">${tHtml('GET requests to content URLs. Assets, technical endpoints and admin pages are filtered out.')}</p>
+    <p class="muted goaccess-page-description">${daily ? tHtml('Successful GET requests to content pages. Assets, redirects, errors and technical endpoints are excluded.') : tHtml('GET requests to content URLs. Assets, technical endpoints and admin pages are filtered out.')}</p>
     <div class="goaccess-page-filters">
       <label class="goaccess-page-search">${tHtml('Search pages')}
         <input id="goaccess-search" type="search" value="${escape(selection.query)}" placeholder="/teachers" autocomplete="off">
@@ -97,7 +98,7 @@ export function pageOverview(key) {
       <span>${tHtml('Page {page} of {pages}', {page: number(selection.page), pages: number(pageCount)})}</span>
       <button class="button secondary" data-goaccess-page="1" ${selection.page >= pageCount ? 'disabled' : ''}>${tHtml('Next page')}</button></div>
     </div>
-    <p class="muted goaccess-page-note">${tHtml('Log estimates may include bots, redirects and failed requests. Visitor counts are daily estimates and are not added across pages or URL variants.')}</p>
+    <p class="muted goaccess-page-note">${daily ? tHtml('Visitors are daily estimates based on the logged address and browser. Bots can remain. Visitors are deduplicated within each page and across the day.') : tHtml('Log estimates may include bots, redirects and failed requests. Visitor counts are daily estimates and are not added across pages or URL variants.')}</p>
     ${selection.merged ? `<p class="muted goaccess-page-note">${tHtml('Combined paths add request counts. Visitors are shown only when a row has a single URL variant.')}</p>` : ''}`;
 }
 

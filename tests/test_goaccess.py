@@ -1,4 +1,5 @@
 import base64
+import copy
 import json
 from pathlib import Path
 import tempfile
@@ -6,12 +7,54 @@ import unittest
 from unittest.mock import patch
 from types import SimpleNamespace
 
-from goaccess_integration import GoAccessCache
+from goaccess_integration import GoAccessCache, validate_daily
 from orbit_config import validate
 from test_goaccess_pages import report, row
 
 
 class GoAccessTests(unittest.TestCase):
+    def daily(self):
+        return {'scope': 'successful-content-get', 'timezone': 'Europe/Berlin', 'includesCurrentLog': True,
+                'generatedAt': '2026-10-21T09:00:00Z', 'days': [
+                    {'date': '2026-10-21', 'requests': 5, 'visitors': 2, 'rows': [
+                        {'path': '/en/page', 'requests': 3, 'visitors': 2},
+                        {'path': '/en/other', 'requests': 2, 'visitors': 1}]}]}
+
+    def test_daily_import_and_selected_date_are_atomic_and_private(self):
+        payload = self.payload()
+        payload['reports'][0]['daily'] = self.daily()
+        with tempfile.TemporaryDirectory() as directory:
+            cache = GoAccessCache(directory)
+            with patch('goaccess_integration.subprocess.run', return_value=SimpleNamespace(returncode=0, stdout=json.dumps(payload).encode())):
+                data = cache.refresh(self.config())
+            self.assertNotIn('rows', data['reports'][0]['daily']['days'][0])
+            self.assertTrue(cache.pages('site', date='2026-10-21')['available'])
+            self.assertEqual(cache.pages('site', date='2026-10-21')['visitors'], 2)
+            self.assertFalse(cache.pages('site', date='2026-10-20')['available'])
+            self.assertFalse(cache.pages('site', date='../summary')['available'])
+            before = cache.read()
+            payload['reports'][0]['daily']['days'][0]['requests'] = 200
+            with patch('goaccess_integration.subprocess.run', return_value=SimpleNamespace(returncode=0, stdout=json.dumps(payload).encode())):
+                with self.assertRaises(ValueError):
+                    cache.refresh(self.config())
+            self.assertEqual(cache.read(), before)
+
+    def test_daily_export_rejects_invalid_dates_paths_and_counts(self):
+        for key, value in [('date', '2026-02-31'), ('requests', True), ('visitors', 100), ('partial', 'false')]:
+            daily = self.daily()
+            daily['days'][0][key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                validate_daily(daily)
+        for path in ('/en/page?q=private', '/admin/settings', '//outside.test', '../private'):
+            daily = self.daily()
+            daily['days'][0]['rows'][0]['path'] = path
+            with self.subTest(path=path), self.assertRaises(ValueError):
+                validate_daily(daily)
+        daily = self.daily()
+        daily['days'].append(copy.deepcopy(daily['days'][0]))
+        with self.assertRaises(ValueError):
+            validate_daily(daily)
+
     def test_pages_read_only_the_selected_cached_period(self):
         with tempfile.TemporaryDirectory() as directory:
             cache = GoAccessCache(directory)
@@ -50,6 +93,7 @@ class GoAccessTests(unittest.TestCase):
             self.assertIsNone(cache.report('../summary'))
             self.assertEqual(run.call_args.args[0][-1], '/srv/analytics/export')
             self.assertIn('StrictHostKeyChecking=yes', run.call_args.args[0])
+            self.assertIn('-C', run.call_args.args[0])
             before = (Path(directory) / 'goaccess/summary.json').read_bytes()
             malformed = self.payload()
             malformed['reports'].append({**malformed['reports'][0], 'id': '../outside'})

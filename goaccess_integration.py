@@ -10,7 +10,7 @@ import subprocess
 import tempfile
 import threading
 
-from goaccess_pages import page_requests
+from goaccess_pages import content_path, daily_totals, page_requests
 
 
 class GoAccessCache:
@@ -23,6 +23,13 @@ class GoAccessCache:
             return json.loads((self.directory / 'summary.json').read_text())
         except (OSError, ValueError):
             return {'reports': [], 'downloadedAt': None}
+
+    def overview(self):
+        data = self.read()
+        for report in data['reports']:
+            if not report.get('daily'):
+                report['daily'] = daily_totals(self.report(report['id'], 'all'))
+        return data
 
     def report(self, identifier, period="all"):
         if period not in ("all", "30", "7"):
@@ -41,8 +48,22 @@ class GoAccessCache:
         except OSError:
             return None
 
-    def pages(self, identifier, period='all'):
+    def pages(self, identifier, period='all', date=None):
         # Read only the saved report. Opening the page overview never uses SSH.
+        if date is not None:
+            unavailable = {'available': False, 'rows': [], 'requests': 0, 'partial': False}
+            if not isinstance(date, str) or not re.fullmatch(r'\d{4}-\d{2}-\d{2}', date):
+                return unavailable
+            report = next((item for item in self.read()['reports'] if item['id'] == identifier), {})
+            filename = report.get('dailyFile', '')
+            if not re.fullmatch(r'[a-f0-9]{64}\.json', filename):
+                return unavailable
+            try:
+                daily = json.loads((self.directory / filename).read_text())
+                day = next((day for day in daily['days'] if day['date'] == date), None)
+                return {'available': True, **day} if day else unavailable
+            except (OSError, ValueError, KeyError):
+                return unavailable
         return page_requests(self.report(identifier, period))
 
     def refresh(self, config):
@@ -53,7 +74,7 @@ class GoAccessCache:
         try:
             source = config['host'] + ':' + config['command']
             # Configuration validation accepts one executable, no shell arguments.
-            result = subprocess.run(['ssh', '-T', '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes',
+            result = subprocess.run(['ssh', '-C', '-T', '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes',
                 '-o', 'ConnectTimeout=10', config['host'], config['command']],
                 capture_output=True, timeout=45)
             if result.returncode or len(result.stdout) > 40_000_000:
@@ -83,6 +104,14 @@ class GoAccessCache:
                     raise ValueError('Invalid report values')
                 metadata = {'id': identifier, 'label': label, 'hostname': hostname, 'summary': values,
                             'generatedAt': item.get('generatedAt'), 'status': item.get('status', 'ready')}
+                if item.get('daily') is not None:
+                    daily = validate_daily(item['daily'])
+                    body = json.dumps(daily).encode()
+                    name = hashlib.sha256(body).hexdigest() + '.json'
+                    self._write(name, body)
+                    metadata['dailyFile'] = name
+                    metadata['daily'] = {**daily, 'days': [{key: value for key, value in day.items() if key != 'rows'}
+                                                         for day in daily['days']]}
                 if item.get('html'):
                     html = base64.b64decode(item['html'], validate=True)
                     if len(html) > 10_000_000:
@@ -123,8 +152,9 @@ class GoAccessCache:
             # Old report versions are removed only after the new manifest commits.
             active = {item.get('file') for item in reports}
             active.update(window.get('file') for item in reports for window in item.get('periods', {}).values())
-            for path in self.directory.glob('*.html'):
-                if path.name not in active:
+            active.update(item.get('dailyFile') for item in reports)
+            for path in self.directory.iterdir():
+                if re.fullmatch(r'[a-f0-9]{64}\.(?:html|json)', path.name) and path.name not in active:
                     path.unlink()
             return data
         except (OSError, subprocess.TimeoutExpired, ValueError, TypeError, KeyError) as error:
@@ -141,6 +171,69 @@ class GoAccessCache:
         finally:
             if os.path.exists(temporary):
                 os.unlink(temporary)
+
+
+def validate_daily(value):
+    if not isinstance(value, dict) or value.get('scope') != 'successful-content-get':
+        raise ValueError('Invalid daily report')
+    if type(value.get('includesCurrentLog')) is not bool:
+        raise ValueError('Invalid daily report coverage')
+    timezone = value.get('timezone')
+    if not isinstance(timezone, str) or len(timezone) > 100:
+        raise ValueError('Invalid daily report timezone')
+    from zoneinfo import ZoneInfo
+    try:
+        ZoneInfo(timezone)
+    except (ValueError, KeyError) as error:
+        raise ValueError('Invalid daily report timezone') from error
+    generated = value.get('generatedAt')
+    if not isinstance(generated, str) or len(generated) > 50:
+        raise ValueError('Invalid daily report date')
+    stamp = datetime.datetime.fromisoformat(generated.replace('Z', '+00:00'))
+    if stamp.tzinfo is None:
+        raise ValueError('Invalid daily report date')
+    days = value.get('days')
+    if not isinstance(days, list) or len(days) > 366:
+        raise ValueError('Invalid daily report dates')
+    seen = set()
+    clean = []
+    for day in days:
+        if not isinstance(day, dict):
+            raise ValueError('Invalid daily report day')
+        date = day.get('date')
+        if not isinstance(date, str) or not re.fullmatch(r'\d{4}-\d{2}-\d{2}', date) or date in seen:
+            raise ValueError('Invalid daily report date')
+        datetime.date.fromisoformat(date)
+        seen.add(date)
+        counts = [day.get('requests'), day.get('visitors')]
+        if any(type(number) is not int or not 0 <= number <= 9_007_199_254_740_991 for number in counts):
+            raise ValueError('Invalid daily report counts')
+        if counts[1] > counts[0] or type(day.get('partial', False)) is not bool:
+            raise ValueError('Invalid daily report counts')
+        rows = day.get('rows')
+        if not isinstance(rows, list) or len(rows) > 100_000:
+            raise ValueError('Invalid daily report pages')
+        paths = set()
+        normalized = []
+        for row in rows:
+            if not isinstance(row, dict):
+                raise ValueError('Invalid daily page')
+            path = row.get('path')
+            if content_path(path) != path or path is None or path in paths:
+                raise ValueError('Invalid daily page path')
+            paths.add(path)
+            hits, visitors = row.get('requests'), row.get('visitors')
+            if any(type(number) is not int or not 0 <= number <= 9_007_199_254_740_991 for number in (hits, visitors)) or visitors > hits:
+                raise ValueError('Invalid daily page counts')
+            normalized.append({'path': path, 'requests': hits, 'visitors': visitors, 'variants': 1})
+        if (sum(row['requests'] for row in normalized) != counts[0]
+                or any(row['visitors'] > counts[1] for row in normalized)
+                or counts[1] > sum(row['visitors'] for row in normalized)):
+            raise ValueError('Inconsistent daily report counts')
+        clean.append({'date': date, 'requests': counts[0], 'visitors': counts[1], 'rows': normalized,
+                      'partial': day.get('partial', False), 'pagesAvailable': True})
+    return {'scope': 'successful-content-get', 'timezone': timezone, 'includesCurrentLog': value['includesCurrentLog'],
+            'generatedAt': generated, 'days': sorted(clean, key=lambda day: day['date'])}
 
 
 def readable_report(body, theme='light'):

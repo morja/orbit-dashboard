@@ -14,6 +14,7 @@ const assert=require('node:assert/strict');
  try{
   browser=await chromium.launch({executablePath:process.env.ORBIT_BROWSER_EXECUTABLE || undefined,headless:true});
   const page=await browser.newPage({viewport:{width:1440,height:1000}});
+  await page.clock.install({time: new Date('2026-10-21T10:00:00Z')});
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.goto(ready.url+'/#key='+ready.key);
   await page.waitForSelector('#project-table tbody tr');
@@ -112,6 +113,26 @@ const assert=require('node:assert/strict');
   await page.locator('#goaccess-period').selectOption('30');
   await page.waitForFunction(() => document.querySelector('.goaccess-page-metrics dd')?.textContent === '3,922');
   assert.equal(downloads, 1, 'Page filters and periods never use SSH');
+  await page.locator('#goaccess-period').selectOption('today');
+  await page.waitForFunction(() => document.querySelector('.goaccess-page-metrics dd')?.textContent === '12');
+  assert.equal(await page.locator('.goaccess-page-metrics dd').nth(1).innerText(), '3');
+  assert.equal(await page.locator('.goaccess-page-table tbody tr').count(), 2);
+  assert.match(await page.locator('.goaccess-page-table').innerText(), /shared-article/);
+  assert.equal(await page.locator('[data-goaccess-report="demo"] dd').first().innerText(), '12');
+  assert.equal(await page.locator('[data-goaccess-mode="technical"]').isDisabled(), true);
+  assert.equal(await page.locator('.goaccess-day[aria-pressed="true"]').getAttribute('data-goaccess-day'), '2026-10-21');
+  await page.locator('#goaccess-period').selectOption('yesterday');
+  await page.waitForFunction(() => document.querySelector('.goaccess-page-metrics dd')?.textContent === '8');
+  assert.equal(await page.locator('.goaccess-page-metrics dd').nth(1).innerText(), '2');
+  await page.locator('[data-goaccess-day="2026-10-10"]').click();
+  await page.waitForFunction(() => document.querySelector('.goaccess-page-metrics dd')?.textContent === '4');
+  assert.equal(await page.locator('#goaccess-date').inputValue(), '2026-10-10');
+  await page.locator('#goaccess-date').fill('2026-09-01');
+  assert.match(await page.locator('.goaccess-pages .notice').innerText(), /No saved data for this day/);
+  assert.equal(await page.locator('[data-goaccess-report="demo"] dd').first().innerText(), '—');
+  assert.equal(await page.locator('.goaccess-page-table').count(), 0);
+  await page.locator('#goaccess-period').selectOption('today');
+  await page.waitForSelector('.goaccess-page-table');
   for (const language of ['en', 'de']) {
    for (const theme of ['light', 'dark']) {
     for (const width of [1440, 390]) {
@@ -122,6 +143,11 @@ const assert=require('node:assert/strict');
      }, {language, theme});
      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
      assert.equal(await page.locator('.goaccess-page-table').evaluate(el => el.scrollWidth <= el.clientWidth + 1), true);
+     assert.equal(await page.locator('.goaccess-day[aria-pressed="true"]').evaluate(el => {
+      const day = el.getBoundingClientRect();
+      const chart = el.closest('.goaccess-day-chart').getBoundingClientRect();
+      return day.left >= chart.left - 2 && day.right <= chart.right + 2;
+     }), true, 'The selected day stays visible in a horizontally scrolling chart');
      const sizes = await page.locator('.goaccess-pages h2, .goaccess-card h2').evaluateAll(nodes => nodes.map(node => getComputedStyle(node).fontSize));
      assert.equal(new Set(sizes).size, 1, 'Page and report cards reuse the heading token');
      assert.match(await page.locator('[data-goaccess-mode="pages"]').innerText(), language === 'de' ? /Besuchte Seiten/ : /Visited pages/);
@@ -135,6 +161,10 @@ const assert=require('node:assert/strict');
    (await import('/js/render.js')).render({force: true});
   });
   await page.locator('[data-goaccess-report="legacy"]').click();
+  await page.locator('#goaccess-period').selectOption('yesterday');
+  assert.match(await page.locator('.goaccess-pages .notice').innerText(), /require an updated server export/);
+  assert.equal(await page.locator('[data-goaccess-report="legacy"] dd').last().innerText(), '5');
+  await page.locator('#goaccess-period').selectOption('30');
   await page.waitForFunction(() => document.querySelector('.goaccess-pages')?.textContent.includes('no readable page data'));
   assert.equal(await page.locator('.goaccess-page-metrics').count(), 0);
   await page.locator('[data-goaccess-report="waiting"]').click();
