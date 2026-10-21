@@ -322,7 +322,10 @@ class CollectorsTest(unittest.TestCase):
     def test_git_rename_newline_filename_and_conflict_counts(self):
         with TemporaryDirectory() as tmp:
             (Path(tmp) / ".git").mkdir()
-            outputs = [("R  renamed\0old-name\0?? file\nname\0UU conflicted\0", 0), ("feature/test\n", 0), ("1234567890\n", 0), ("2\t3\n", 0), ("origin\n", 0), ("origin/main\n", 0)]
+            output = ('# branch.head feature/test\0# branch.upstream origin/main\0# branch.ab +3 -2\0'
+                      '2 R. N... 100644 100644 100644 a b R100 renamed\0old-name\0'
+                      '? file\nname\0u UU N... 100644 100644 100644 100644 a b c conflicted\0')
+            outputs = [(output, 0), ('abcdef0\0' + '1234567890\n', 0), ('origin\n', 0)]
             with patch("server.command", side_effect=outputs):
                 result = git_status(tmp)
             self.assertEqual(result["changed"], 3)
@@ -340,8 +343,8 @@ class CollectorsTest(unittest.TestCase):
     def test_git_preview_is_bounded(self):
         with TemporaryDirectory() as tmp:
             (Path(tmp) / ".git").mkdir()
-            output = "".join(f" M file-{n}.txt\0" for n in range(30))
-            with patch("server.command", side_effect=[(output, 0), ("main", 0), ("100", 0), ("0 0", 0), ("origin\n", 0), ("origin/main\n", 0)]):
+            output = '# branch.head main\0' + ''.join(f'1 .M N... 100644 100644 100644 a b file-{n}.txt\0' for n in range(30))
+            with patch("server.command", side_effect=[(output, 0), ('abcdef0\0' + '100', 0), ('origin\n', 0)]):
                 result = git_status(tmp)
             self.assertEqual(len(result["files"]), 12)
             self.assertEqual(result["files_remaining"], 18)

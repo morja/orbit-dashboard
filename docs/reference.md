@@ -140,6 +140,10 @@ than rescanning every project. Notifications continue to accumulate in the backg
 while project scans are paused. Notifications are asynchronous; changes delivered
 during a check remain pending for the following check.
 
+Each inspected Git repository uses three read-only Git processes. File changes,
+branch, upstream and ahead/behind counts share one status query; commit time and
+the remote list are read separately. This also applies to full fallback checks.
+
 Source edits, deletions and renames trigger a source timestamp scan for that project.
 Changes confined to Git metadata, logs, hidden folders or configured excluded folders
 update Git without walking source files. Source and commit timestamps are cached

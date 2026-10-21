@@ -144,47 +144,63 @@ def git_status(path):
     def git(*args):
         return command(["git", "-C", str(path), *args])
 
-    output, code = git("status", "--porcelain=v1", "-z", "--untracked-files=normal")
+    # Porcelain v2 includes branch/upstream and ahead/behind in the status read.
+    # This replaces three extra Git processes for every checked repository.
+    output, code = git("status", "--porcelain=v2", "--branch", "--ahead-behind", "-z", "--untracked-files=normal")
     if code != 0:
         return {"available": True, "status": "unknown", "changed": None}
     items = output.split("\0")
     counts = {"changed": 0, "staged": 0, "unstaged": 0, "untracked": 0, "conflicts": 0}
     files = []
+    headers = {}
     index = 0
     while index < len(items):
         entry = items[index]
         index += 1
         if not entry:
             continue
-        xy = entry[:2]
+        if entry.startswith('# '):
+            name, _, value = entry[2:].partition(' ')
+            headers[name] = value
+            continue
+        kind = entry[0]
+        if kind == '?':
+            xy, name = '??', entry[2:]
+        elif kind in ('1', '2', 'u'):
+            # Split only the fixed metadata fields; filenames can contain spaces
+            # and newlines. Renames have a second NUL field for their old path.
+            fields = entry.split(' ', {'1': 8, '2': 9, 'u': 10}[kind])
+            xy, name = fields[1].replace('.', ' '), fields[-1]
+            if kind == '2':
+                index += 1
+        else:
+            continue
         counts["changed"] += 1
         counts["untracked"] += xy == "??"
         counts["staged"] += xy[0] not in (" ", "?")
         counts["unstaged"] += xy[1] not in (" ", "?")
         counts["conflicts"] += "U" in xy or xy in ("AA", "DD")
         if len(files) < 12:
-            files.append({"path": entry[3:], "status": xy})
-        if "R" in xy or "C" in xy:
-            index += 1  # The next NUL field is the old filename, not another change.
-    branch, _ = git("symbolic-ref", "--short", "HEAD")
-    if not branch.strip():
-        branch, _ = git("rev-parse", "--short", "HEAD")
-    activity, _ = git("log", "-1", "--format=%ct")
-    tracking, tracking_code = git("rev-list", "--left-right", "--count", "@{upstream}...HEAD")
+            files.append({"path": name, "status": xy})
+    activity, _ = git("log", "-1", "--format=%h%x00%ct")
+    commit, _, timestamp = activity.strip().partition('\0')
+    branch = headers.get('branch.head', '')
+    if branch == '(detached)':
+        branch = commit
     behind = ahead = None
-    if tracking_code == 0 and len(tracking.split()) == 2:
-        behind, ahead = map(int, tracking.split())
+    tracking = re.fullmatch(r'\+(\d+) -(\d+)', headers.get('branch.ab', ''))
+    if tracking:
+        ahead, behind = map(int, tracking.groups())
 
     # A remote can exist without tracking; a configured upstream may be missing locally.
     remotes, remote_code = git("remote")
-    upstream, upstream_code = git("for-each-ref", "--format=%(upstream:short)", f"refs/heads/{branch.strip()}")
     return {
         "available": True, "status": "dirty" if counts["changed"] else "clean",
         "branch": branch.strip() or "Noch kein Commit",
-        "last_commit": int(activity.strip()) if activity.strip().isdigit() else None,
+        "last_commit": int(timestamp) if timestamp.isdigit() else None,
         "ahead": ahead, "behind": behind,
         "has_remote": bool(remotes.strip()) if remote_code == 0 else None,
-        "upstream": upstream.strip() if upstream_code == 0 else None,
+        "upstream": headers.get('branch.upstream', ''),
         "files": files, "files_remaining": max(0, counts["changed"] - len(files)),
         **counts,
     }
