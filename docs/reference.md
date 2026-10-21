@@ -121,6 +121,9 @@ The dashboard uses no external fonts or APIs.
 Default intervals are 30 seconds for Mac storage, one minute for foreground project checks
 and DDEV, five minutes for background project checks, two minutes for server status
 and Docker, and one hour for folder sizes. Existing saved intervals are preserved.
+Docker status and containers follow the Docker interval; storage values (`docker system df`,
+free space in the Colima VM and Colima disk usage on the Mac) are measured at most every
+ten minutes. Manual Refresh and an unreachable Docker measure them again immediately.
 Under Settings → Advanced, disable **Check projects in the background** to pause
 project discovery, Git, last-changed and folder-size checks while no authenticated
 Orbit window is active. Returning to the foreground checks projects immediately;

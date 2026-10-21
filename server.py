@@ -35,6 +35,8 @@ APP = Path(__file__).resolve().parent
 SKIP = {"node_modules", "vendor", "build", "dist", "target", "Pods", "DerivedData", "__pycache__"}
 STATES = {"active", "paused", "blocked", "done", "archived"}
 PRIORITIES = {"normal", "high", "low"}
+# Storage totals change slowly, and docker system df is the most expensive Docker query.
+DOCKER_STORAGE_INTERVAL = 600
 
 
 class ThreadingHTTPServer(StandardThreadingHTTPServer):
@@ -451,6 +453,8 @@ class Dashboard:
         self.servers = {self.server_key(item): store.cached(self.server_key(item)) for item in self.config['servers']}
         self.ddev = {"projects": [], "checked_at": None, "error": None}
         self.docker = {"checked_at": None, "status": "unknown", "colima_status": "unknown", "errors": [], "usage": []}
+        self.docker_storage = None
+        self.docker_storage_at = 0
         self.services = {"items": [], "notices": [], "checked_at": None}
         self.sizes = {}
         with store.connect() as db:
@@ -561,6 +565,8 @@ class Dashboard:
     def refresh(self, force=False):
         if force and self.project_changes:
             self.project_changes.invalidate()
+        if force:
+            self.docker_storage_at = 0  # Manual Refresh also measures Docker storage.
         for name in ["mac", "projects", "moon", "ddev", "docker", "sizes", "services"]:
             if name in ("moon", "ddev", "docker", "services") and not self.config[name + "_enabled"]:
                 continue
@@ -799,6 +805,14 @@ class Dashboard:
             profiles = []
             value["errors"].append("Colima status is unavailable.")
 
+        # Storage values are measured at most every DOCKER_STORAGE_INTERVAL; status and
+        # containers stay at the normal Docker interval.
+        with self.lock:
+            storage = None if time.time() - self.docker_storage_at >= DOCKER_STORAGE_INTERVAL else copy.deepcopy(self.docker_storage)
+        measured = storage is None
+        if measured:
+            storage = {"usage": [], "errors": []}
+
         # Match the socket rather than the context name (the default context may point at Colima).
         output, code = command([executable("docker"), "context", "inspect", "--format", "{{.Endpoints.docker.Host}}"])
         endpoint = output.strip() if code == 0 else ""
@@ -809,34 +823,36 @@ class Dashboard:
             value["profile"] = profile["name"]
             value["colima_status"] = str(profile.get("status", "unknown")).lower()
             value["docker_on_colima"] = endpoint == "unix://" + str(Path.home() / ".colima" / profile["name"] / "docker.sock")
-            if value["colima_status"] == "running" and profile.get("runtime") == "docker":
+            if measured and value["colima_status"] == "running" and profile.get("runtime") == "docker":
                 output, code = command([colima, "ssh", "--profile", profile["name"], "--", "df", "-Pk", "/var/lib/docker"], timeout=15)
                 try:
                     if code != 0:
                         raise ValueError()
-                    value["vm_disk"] = parse_vm_disk(output)
+                    storage["vm_disk"] = parse_vm_disk(output)
                 except (ValueError, IndexError):
-                    value["errors"].append("Free space in the Colima VM could not be measured.")
+                    storage["errors"].append("Free space in the Colima VM could not be measured.")
 
         # du reports allocated blocks, unlike the much larger logical VM image size.
         paths = [str(p) for p in [Path.home() / ".colima", Path.home() / ".local/share/colima"] if p.is_dir() and not p.is_symlink()]
-        if paths:
+        if measured and paths:
             output, code = command(["du", "-sk", *paths], timeout=20)
             try:
                 if code != 0:
                     raise ValueError()
-                value["host_bytes"] = sum(int(line.split()[0]) * 1024 for line in output.splitlines())
+                storage["host_bytes"] = sum(int(line.split()[0]) * 1024 for line in output.splitlines())
             except (ValueError, IndexError):
-                value["errors"].append("Colima disk usage on Mac could not be measured.")
+                storage["errors"].append("Colima disk usage on Mac could not be measured.")
 
-        output, code = command([executable("docker"), "system", "df", "--format", "{{json .}}"], timeout=20)
-        try:
-            if code != 0:
-                raise ValueError()
-            value["usage"] = parse_docker_usage(output)
-            value["status"] = "running"
-        except (ValueError, TypeError, KeyError):
-            value["errors"].append("Docker is unavailable or its storage values cannot be read.")
+        if measured:
+            output, code = command([executable("docker"), "system", "df", "--format", "{{json .}}"], timeout=20)
+            try:
+                if code != 0:
+                    raise ValueError()
+                storage["usage"] = parse_docker_usage(output)
+                storage["reachable"] = True
+            except (ValueError, TypeError, KeyError):
+                storage["errors"].append("Docker is unavailable or its storage values cannot be read.")
+
         # One read-only list query; request only display fields and the DDEV marker.
         template = '{"name":{{json .Names}},"image":{{json .Image}},"state":{{json .State}},"status":{{json .Status}},"ports":{{json .Ports}},"ddev":{{json (.Label "com.ddev.platform")}},"project":{{json (.Label "com.docker.compose.project")}}}'
         output, code = command([executable("docker"), "ps", "--all", "--format", template], timeout=20)
@@ -848,10 +864,20 @@ class Dashboard:
             value['containers'], value['containers_truncated'] = parse_docker_containers(output)
         except (ValueError, TypeError, KeyError):
             value['containers_error'] = 'Docker container list is unavailable.'
+
+        # Kept storage values are only valid while Docker still answers.
+        if not measured and value['containers_error']:
+            measured, storage = True, {"usage": [], "errors": ["Docker is unavailable or its storage values cannot be read."]}
+        value["status"] = "running" if storage.get("reachable") else "unreachable"
+        value.update({key: storage[key] for key in ("vm_disk", "host_bytes", "usage") if key in storage})
+        value["errors"] += storage["errors"]
         with self.lock:
             if self.config is not config:
                 return
             self.docker = value
+            self.docker_storage = storage
+            if measured:
+                self.docker_storage_at = time.time() if storage.get("reachable") else 0
         self.store.cache("docker", value)
 
     def snapshot(self):

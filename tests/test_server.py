@@ -102,6 +102,48 @@ class CollectorsTest(unittest.TestCase):
             self.assertEqual(dashboard.docker["usage"], [])
             dashboard.pool.shutdown()
 
+    def test_docker_storage_is_measured_every_ten_minutes_while_containers_stay_current(self):
+        usage = '\n'.join(json.dumps({'Type': kind, 'TotalCount': '1', 'Active': '1', 'Size': '1GB', 'Reclaimable': '0B (0%)'})
+                          for kind in ('Images', 'Containers', 'Local Volumes', 'Build Cache'))
+        calls = []
+        ps_code = [0]
+
+        def run(args, **kwargs):
+            calls.append(args[1:3])
+            if args[1:3] == ['system', 'df']:
+                return usage, 0
+            if args[1] == 'ps':
+                return '', ps_code[0]
+            return '', 1
+
+        with TemporaryDirectory() as tmp:
+            dashboard = Dashboard(Store(tmp), {"roots": [], "docker_enabled": True})
+            try:
+                with patch('server.command', side_effect=run), patch('server.time.time', return_value=1000):
+                    dashboard.collect_docker()
+                self.assertEqual(dashboard.docker['status'], 'running')
+                with patch('server.command', side_effect=run), patch('server.time.time', return_value=1599):
+                    calls.clear()
+                    dashboard.collect_docker()
+                self.assertNotIn(['system', 'df'], calls)
+                self.assertEqual(dashboard.docker['status'], 'running')
+                self.assertEqual(dashboard.docker['usage'][0]['type'], 'Images')
+                # Manual Refresh measures storage again before the interval ends.
+                with patch('server.command', side_effect=run), patch('server.time.time', return_value=1599), patch.object(dashboard.pool, 'submit'):
+                    dashboard.refresh(True)
+                    calls.clear()
+                    dashboard.collect_docker()
+                self.assertIn(['system', 'df'], calls)
+                # A failed container query discards kept storage values.
+                ps_code[0] = 1
+                with patch('server.command', side_effect=run), patch('server.time.time', return_value=1700):
+                    dashboard.collect_docker()
+                self.assertEqual(dashboard.docker['status'], 'unreachable')
+                self.assertEqual(dashboard.docker['usage'], [])
+                self.assertEqual(dashboard.docker_storage_at, 0)
+            finally:
+                dashboard.pool.shutdown()
+
     def test_activity_ignores_dependencies_and_git_but_includes_uncommitted_files(self):
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
