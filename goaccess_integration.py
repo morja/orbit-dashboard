@@ -9,6 +9,7 @@ import re
 import subprocess
 import tempfile
 import threading
+from zoneinfo import ZoneInfo
 
 from goaccess_pages import content_path, daily_totals, page_requests
 
@@ -181,7 +182,6 @@ def validate_daily(value):
     timezone = value.get('timezone')
     if not isinstance(timezone, str) or len(timezone) > 100:
         raise ValueError('Invalid daily report timezone')
-    from zoneinfo import ZoneInfo
     try:
         ZoneInfo(timezone)
     except (ValueError, KeyError) as error:

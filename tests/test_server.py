@@ -1,6 +1,8 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
+import contextlib
+import io
 import json
 import subprocess
 import sys
@@ -552,6 +554,25 @@ class ApiTest(unittest.TestCase):
             self.request(f"/api/projects/{self.key}", {"next_step": "unwanted"}, "https://example.com")
         self.assertEqual(context.exception.code, 403)
         self.assertFalse(self.store.notes())
+
+    def test_unexpected_errors_are_logged_and_reported(self):
+        # A failure outside the expected error types (for example a stdlib module missing after
+        # a Python upgrade under the running server) must reach the log, not only the client.
+        self.dashboard.config['goaccess'] = {'enabled': True, 'host': 'moon', 'command': '/usr/bin/true'}
+        log = io.StringIO()
+        with patch.object(self.dashboard.goaccess, 'refresh', side_effect=ModuleNotFoundError('zoneinfo')), \
+                contextlib.redirect_stderr(log), self.assertRaises(urllib.error.HTTPError) as context:
+            self.request('/api/goaccess/refresh', {})
+        self.assertEqual(context.exception.code, 503)
+        self.assertIn('previous local copy is preserved', json.load(context.exception)['error'])
+        self.assertIn('ModuleNotFoundError: zoneinfo', log.getvalue())
+
+        with patch.object(self.dashboard.store, 'save_note', side_effect=RuntimeError('disk gone')), \
+                contextlib.redirect_stderr(log), self.assertRaises(urllib.error.HTTPError) as context:
+            self.request(f"/api/projects/{self.key}", {"next_step": "x"})
+        self.assertEqual(context.exception.code, 500)
+        self.assertEqual(json.load(context.exception)['error'], 'Save failed')
+        self.assertIn('RuntimeError: disk gone', log.getvalue())
 
     def test_activity_requires_authentication_and_valid_window_identity(self):
         data = {'client': 'a' * 32, 'active': True}

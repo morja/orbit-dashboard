@@ -25,6 +25,7 @@ import sqlite3
 import subprocess
 import threading
 import time
+import traceback
 
 from orbit_config import Settings, detect, migrate_legacy, validate
 from remote_probe import probe_script, parse_probe
@@ -1023,6 +1024,11 @@ class Handler(BaseHTTPRequestHandler):
                     return self.send(dashboard.goaccess.refresh(copy.deepcopy(dashboard.config['goaccess'])))
                 except ValueError as error:
                     return self.send({'error': str(error)}, 503)
+                except Exception:
+                    # An unexpected failure (for example a stdlib module missing after a Python
+                    # upgrade under the running process) keeps the previous local copy as well.
+                    self.log_error("Report download failed for %s\n%s", path, traceback.format_exc().rstrip())
+                    return self.send({'error': 'GoAccess download failed unexpectedly; the previous local copy is preserved'}, 503)
             if path == "/api/settings":
                 return self.send(dashboard.update_config(data))
             match_service = re.fullmatch(r"/api/services/([a-f0-9]{20})", path)
@@ -1072,6 +1078,8 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, TypeError) as error:
             return self.send({"error": str(error) if isinstance(error, ValueError) else "Invalid input"}, 400)
         except Exception:
+            # The client only learns that the change failed; the cause goes to the log.
+            self.log_error("Unhandled error for POST %s\n%s", urlparse(self.path).path, traceback.format_exc().rstrip())
             return self.send({"error": "Save failed"}, 500)
 
 
