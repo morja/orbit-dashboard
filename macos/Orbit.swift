@@ -96,13 +96,9 @@ final class OrbitApp: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavig
         webView.uiDelegate = self
         window.contentView!.addSubview(webView)
 
-        overlay = NSView(frame: window.contentView!.bounds)
+        overlay = Backdrop(frame: window.contentView!.bounds)
         overlay.autoresizingMask = [.width, .height]
         overlay.wantsLayer = true
-        // Match the dashboard background while the backend starts, also in dark mode.
-        let dark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-        let background = dark ? NSColor(calibratedRed: 0.071, green: 0.094, blue: 0.082, alpha: 1) : NSColor(calibratedRed: 0.96, green: 0.965, blue: 0.945, alpha: 1)
-        overlay.layer?.backgroundColor = background.cgColor
         window.contentView!.addSubview(overlay)
         spinner = NSProgressIndicator()
         spinner.style = .spinning
@@ -185,9 +181,16 @@ final class OrbitApp: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNavig
         controller.addUserScript(WKUserScript(source: "window.orbitWindowActive = \(active);", injectionTime: .atDocumentStart, forMainFrameOnly: true))
     }
 
+    // A Python update can remove the interpreter recorded at build time.
+    private func python() -> String {
+        let configured = Bundle.main.object(forInfoDictionaryKey: "OrbitPython") as? String ?? ""
+        let candidates = [configured, "/opt/homebrew/bin/python3", "/usr/local/bin/python3"]
+        return candidates.first { FileManager.default.isExecutableFile(atPath: $0) } ?? configured
+    }
+
     private func launchBackend() {
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: Bundle.main.object(forInfoDictionaryKey: "OrbitPython") as! String)
+        process.executableURL = URL(fileURLWithPath: python())
         process.arguments = [project.appendingPathComponent("server.py").path, "--managed", "--parent-pid", String(ProcessInfo.processInfo.processIdentifier)]
         process.currentDirectoryURL = project
         var environment = ProcessInfo.processInfo.environment
@@ -348,5 +351,27 @@ struct OrbitMain {
         app.setActivationPolicy(.regular)
         app.run()
         withExtendedLifetime(delegate) {}
+    }
+}
+
+
+// Matches the dashboard background while the backend starts and follows later
+// light/dark switches, so the status text stays readable.
+final class Backdrop: NSView {
+    private static let color = NSColor(name: nil) { appearance in
+        appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor(calibratedRed: 0.071, green: 0.094, blue: 0.082, alpha: 1)
+            : NSColor(calibratedRed: 0.96, green: 0.965, blue: 0.945, alpha: 1)
+    }
+
+    override var wantsUpdateLayer: Bool { true }
+
+    override func updateLayer() {
+        layer?.backgroundColor = Self.color.cgColor
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        needsDisplay = true
     }
 }

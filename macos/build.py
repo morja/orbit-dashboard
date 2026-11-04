@@ -46,6 +46,19 @@ for size in [16, 32, 64, 128, 256, 512, 1024] {
     subprocess.run(["iconutil", "-c", "icns", str(iconset), "-o", str(output)], check=True)
 
 
+def stable_python():
+    # Homebrew deletes the versioned Cellar folder on every patch upgrade, but
+    # keeps the formula's opt link, so the app stores that link instead.
+    python = Path(sys.executable).absolute()
+    resolved = python.resolve()
+    if "Cellar" in resolved.parts:
+        index = resolved.parts.index("Cellar")
+        link = Path(*resolved.parts[:index], "opt", resolved.parts[index + 1], "bin", resolved.name)
+        if link.resolve() == resolved:
+            return link
+    return python
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=DESTINATION,
@@ -55,7 +68,7 @@ def main():
         info = plistlib.loads((destination / "Contents/Info.plist").read_bytes())
         if info.get("CFBundleIdentifier") != BUNDLE_ID:
             raise SystemExit("Another app with this name already exists and is preserved.")
-    python = Path(sys.executable).resolve()
+    python = stable_python()
     if sys.version_info < (3, 10):
         raise SystemExit("Orbit requires Python 3.10 or newer.")
     with tempfile.TemporaryDirectory(prefix="orbit-build-") as directory:
