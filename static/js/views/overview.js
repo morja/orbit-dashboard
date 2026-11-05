@@ -140,7 +140,7 @@ function attentionRows() {
     rows.push({ icon: 'server', title: t('Colima is running low on space'), text: t('{size} free for DDEV and Docker.', { size: bytes(data.docker.vm_disk.free) }), href: '#docker' });
   }
   if (data.mac?.percent >= 85) {
-    rows.push({ icon: 'disk', title: t('Your Mac is running low on space'), text: t('{size} free. Find the largest projects under Storage.', { size: bytes(data.mac.free) }), href: '#storage' });
+    rows.push({ icon: 'disk', title: t('Your Mac is running low on space'), text: t('{size} free. Find the largest projects under Storage.', { size: bytes(data.mac.free) }), href: '#storage', check: true });
   }
   if (data.config.moon_enabled) {
     for (const server of servers()) {
@@ -167,10 +167,13 @@ function attentionRow(row) {
   const action = row.href
     ? `<a class="icon-button" href="${row.href}" aria-label="${escape(t('Open details'))}">${icon('arrow')}</a>`
     : `<button class="icon-button metric-filter" data-filter="${row.filter}" aria-label="${escape(t('Show projects'))}">${icon('arrow')}</button>`;
+  // The low-space row also offers the read-only disk report (see disk-check.js).
+  // The button sits under the text, so narrow columns keep the row's width.
+  const check = row.check && `<button type="button" class="button secondary disk-check-run">${tHtml('Check')}</button>`;
   return markup`
     <div class="attention-row ${row.info ? 'info' : ''}">
       <span class="attention-icon">${icon(row.icon)}</span>
-      <div><strong>${escape(row.title)}</strong><p>${escape(row.text)}</p></div>
+      <div><strong>${escape(row.title)}</strong><p>${escape(row.text)}</p>${check}</div>
       ${action}
     </div>
   `;

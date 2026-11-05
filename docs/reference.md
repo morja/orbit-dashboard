@@ -234,7 +234,14 @@ The independent theme selector offers **Orbit** as the original design, **Ocean*
 immediately; Cancel restores the saved appearance. Save persists it.
 
 The overview uses a single status strip above recent projects, with attention and
-server summaries in a side column. Service lists expand on demand. On smaller
+server summaries in a side column. When the Mac disk is 85% full or more, the
+attention notice offers a **Check** button. It runs `~/Work/Cockpit/bin/disk-check
+--quick` through the backend and shows the report in a dialog (monospace, scrollable,
+with Copy and Close). The command is a local Cockpit tool that only reads: free
+space, local Time Machine snapshots, Time Machine mode, unused Docker data and
+suggestions. Orbit never passes `--thin`, never deletes anything and offers no
+custom command setting. If the command is missing, the dialog names the expected
+path; a failed run shows its stderr and exit code. Service lists expand on demand. On smaller
 windows the side column stacks below the project list. The full Projects view
 retains paths and next-step columns; long paths stay on one line and shorten in
 the middle to fit the available width, with the complete path in the tooltip; project notes stay available from each row.

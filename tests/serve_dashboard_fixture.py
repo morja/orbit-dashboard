@@ -70,6 +70,11 @@ def main():
                     'behind': details.get('behind', 0) if comparable else None, 'files': files, 'last_commit': details['modified']}
 
         server.command = command
+        # The disk report comes from a stand-in script, never from the real Cockpit command.
+        disk_check = Path(tmp) / 'disk-check'
+        disk_check.write_text('#!/bin/sh\nprintf "DISK           12.6 GB free of 494.4 GB\\nSNAPSHOTS     2 local Time Machine snapshot(s)\\n              2026-11-05-010533\\n              2026-11-05-031702\\nTIME MACHINE  automatic (hourly), disk not mounted, last backup unknown\\nTRASH         not readable from here; empty it in the Finder if in doubt\\n\\nSUGGESTIONS\\n  - Snapshots hold deleted data. Free it: tmutil thinlocalsnapshots / 60000000000 4  (or disk-check --thin)\\n"\n')
+        disk_check.chmod(0o700)
+        server.disk_check_executable = lambda: disk_check
         # Fixed machine values keep screenshots comparable between runs.
         usage = namedtuple('Usage', 'total used free')
         server.shutil.disk_usage = lambda path: usage(500 * 1024 ** 3, 320 * 1024 ** 3, 180 * 1024 ** 3)

@@ -236,6 +236,19 @@
     </form>
   </dialog>
 
+  <dialog id="disk-check-dialog" aria-labelledby="disk-check-title">
+    <div class="dialog-heading">
+      <h2 id="disk-check-title">Disk check</h2>
+      <button type="button" class="icon-button close-disk-check" aria-label="Close"><span data-icon="close"></span></button>
+    </div>
+    <p>Read-only report from disk-check --quick. Nothing is deleted or thinned.</p>
+    <div class="disk-check-status" id="disk-check-status" hidden><span class="spinner"></span><span></span></div>
+    <pre class="disk-check-output" id="disk-check-output" tabindex="0" hidden></pre>
+    <div class="dialog-actions">
+      <button type="button" class="button secondary" id="disk-check-copy">Copy</button>
+      <button type="button" class="button primary close-disk-check">Close</button>
+    </div>
+  </dialog>
   <div id="toast" role="status" hidden></div>
   <dialog id="service-dialog" aria-labelledby="service-dialog-title">
     <form id="service-form">

@@ -306,6 +306,36 @@ def open_terminal(project, config):
         raise ValueError("Could not open the terminal")
 
 
+# The disk report is a Cockpit command in the home folder. Orbit runs only its
+# read-only form: it never thins snapshots or deletes anything.
+def disk_check_executable():
+    return Path.home() / "Work/Cockpit/bin/disk-check"
+
+
+DISK_CHECK_LOCK = threading.Lock()
+
+
+def run_disk_check():
+    """Run `disk-check --quick` and return its output, stderr and exit code."""
+    executable = disk_check_executable()
+    if not executable.is_file() or not os.access(executable, os.X_OK):
+        raise FileNotFoundError(f"disk-check was not found at {executable}")
+    if not DISK_CHECK_LOCK.acquire(blocking=False):
+        raise ValueError("The disk check is already running")
+    try:
+        env = dict(os.environ, PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin")
+        started = time.monotonic()
+        try:
+            result = subprocess.run([str(executable), "--quick"], capture_output=True, text=True, errors="replace",
+                                    timeout=90, env=env, stdin=subprocess.DEVNULL)
+        except subprocess.TimeoutExpired:
+            raise TimeoutError("The disk check did not finish within 90 seconds")
+        return {"output": result.stdout, "errors": result.stderr, "exit_code": result.returncode,
+                "seconds": round(time.monotonic() - started, 1), "checked_at": stamp()}
+    finally:
+        DISK_CHECK_LOCK.release()
+
+
 def parse_ddev(text):
     # DDEV may emit more than one JSON log record. Never treat failed output as stopped.
     records = []
@@ -1048,6 +1078,15 @@ class Handler(BaseHTTPRequestHandler):
                     dashboard.manual_refresh = time.time()
                 dashboard.refresh(True)
                 return self.send({"ok": True})
+            if path == "/api/disk-check":
+                try:
+                    return self.send(run_disk_check())
+                except FileNotFoundError as error:
+                    return self.send({"error": str(error)}, 404)
+                except ValueError as error:
+                    return self.send({"error": str(error)}, 409)
+                except TimeoutError as error:
+                    return self.send({"error": str(error)}, 504)
             match = re.fullmatch(r"/api/projects/([a-f0-9]{20})(/open|/terminal|/editor)?", path)
             if not match:
                 return self.send({"error": "Not found"}, 404)

@@ -24,7 +24,8 @@ Python's standard library powers the backend; a small Swift app provides the nat
   accessible cron jobs. Filter by origin, user/system scope and status; mark your own
   services, add descriptions and pin favorites to Overview. Service checks change no jobs.
 - **Storage.** Mac disk space, local project sizes and storage history. Colima figures
-  distinguish VM capacity from space occupied on your Mac.
+  distinguish VM capacity from space occupied on your Mac. When the Mac runs low on
+  space, the attention notice offers a read-only disk report (see the reference).
 - **Optional servers.** Multiple SSH connections with separate overview visibility.
   Opt in to read-only system queries without installing anything on the server,
   use an existing status command, or combine both.

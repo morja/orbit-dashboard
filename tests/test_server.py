@@ -12,6 +12,7 @@ import urllib.error
 import urllib.request
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import server
 from server import ddev_for_project, docker_bytes, parse_docker_usage, parse_docker_containers, parse_vm_disk, Dashboard, Handler, Store, ThreadingHTTPServer, discover_projects, git_status, latest_change, open_cmux, parse_ddev, parse_moon, project_id
 import os
 from orbit_config import defaults, migrate_legacy
@@ -38,6 +39,24 @@ ERGEBNIS
   HINWEIS: Cron: nicht aktiv
   HINWEIS: broken.example.com: Zertifikat ungültig
 """
+
+
+class DiskCheckTest(unittest.TestCase):
+    def test_missing_command_and_report_with_exit_code(self):
+        with TemporaryDirectory() as tmp:
+            script = Path(tmp) / 'disk-check'
+            with patch.object(server, 'disk_check_executable', lambda: script):
+                with self.assertRaisesRegex(FileNotFoundError, 'disk-check was not found at'):
+                    server.run_disk_check()
+                # Orbit asks only for the read-only form and keeps stderr and the exit code.
+                script.write_text('#!/bin/sh\necho "DISK  args: $*"\necho "tmutil failed" >&2\nexit 3\n')
+                script.chmod(0o700)
+                result = server.run_disk_check()
+                self.assertEqual(result['output'], 'DISK  args: --quick\n')
+                self.assertEqual(result['errors'], 'tmutil failed\n')
+                self.assertEqual(result['exit_code'], 3)
+                self.assertTrue(server.DISK_CHECK_LOCK.acquire(blocking=False))
+                server.DISK_CHECK_LOCK.release()
 
 
 class CollectorsTest(unittest.TestCase):

@@ -139,6 +139,39 @@ const readline = require('node:readline');
     await page.locator('#title').click();
     assert.equal(await open(), false, 'Outside click closes the panel');
 
+    // The low-space notice offers the read-only disk report in a dialog.
+    assert.equal(await page.locator('.overview-attention .disk-check-run').count(), 0);
+    const lowSpace = structuredClone(clean);
+    lowSpace.mac = { ...clean.mac, percent: 97.5, free: 12.6 * 1000 ** 3 };
+    await apply(lowSpace);
+    const check = page.locator('.overview-attention .disk-check-run');
+    assert.equal(await check.count(), 1);
+    assert.equal(await check.innerText(), 'Check');
+    await page.evaluate(() => { window.copied = []; navigator.clipboard.writeText = async (text) => { window.copied.push(text); }; });
+    await check.click();
+    const dialog = page.locator('#disk-check-dialog');
+    assert(await dialog.evaluate(el => el.open));
+    await page.waitForSelector('#disk-check-output:not([hidden])');
+    const report = await page.locator('#disk-check-output').innerText();
+    assert.match(report, /^DISK\s+12\.6 GB free/);
+    assert.match(report, /SUGGESTIONS/);
+    assert(await page.locator('#disk-check-status').isHidden());
+    await page.locator('#disk-check-copy').click();
+    assert.deepEqual(await page.evaluate(() => window.copied), [report]);
+    assert.match(await page.locator('#toast').innerText(), /Report copied/);
+    await page.screenshot({ path: path.join(os.tmpdir(), 'orbit-disk-check.png') });
+    await page.locator('#disk-check-dialog .close-disk-check').last().click();
+    assert.equal(await dialog.evaluate(el => el.open), false);
+    // A missing command is reported in the dialog instead of a toast.
+    await page.route('**/api/disk-check', route => route.fulfill({ status: 404, json: { error: 'disk-check was not found at /example/bin/disk-check' } }));
+    await check.click();
+    await page.waitForFunction(() => document.getElementById('disk-check-status').innerText.includes('not found'));
+    assert(await page.locator('#disk-check-output').isHidden());
+    assert(await page.locator('#disk-check-copy').isDisabled());
+    await page.unroute('**/api/disk-check');
+    await page.keyboard.press('Escape');
+    await apply(clean);
+
     // Workspace text remains text, and repeated notices are grouped once.
     const hostile = 'Project folder is unavailable: /example/<img src=x onerror="window.injected=true">';
     await apply({ ...clean, project_errors: [hostile, hostile] });

@@ -38,6 +38,7 @@ export const tHtml = (key, values) => fill(escape(template(key, values)), values
  */
 const messagePatterns = [
   { pattern: /^Project folder is unavailable: (.+)$/, key: 'Project folder is unavailable: {path}', names: ['path'] },
+  { pattern: /^disk-check was not found at (.+)$/, key: 'disk-check was not found at {path}', names: ['path'] },
   { pattern: /^(.+) is currently unavailable or its status cannot be read\. Last values remain visible\.$/, key: '{name} is currently unavailable or its status cannot be read. Last values remain visible.', names: ['name'] },
   { pattern: /^(.+): invalid text$/, key: '{field}: invalid text', names: ['field'], translated: ['field'] },
   { pattern: /^(.+) must be a boolean$/, key: '{field} must be a boolean', names: ['field'], translated: ['field'] },
