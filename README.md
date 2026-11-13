@@ -37,6 +37,9 @@ Python's standard library powers the backend; a small Swift app provides the nat
   remains available for date ranges.
   Configure the read-only export in Settings → Tools. No tracking script or server
   changes are made by Orbit. See [the integration guide](docs/goaccess.md).
+- **Custom pages.** Show HTML files that your own tools generate on this Mac as
+  extra sidebar pages, each with an optional Refresh command. Orbit shows them in a
+  sandbox without network access. See [the reference](docs/reference.md#custom-pages).
 - **An interface you can adjust.** Light, dark and system appearance, five palettes,
   compact or comfortable spacing, font size, contrast and zoom. A collapsible sidebar.
 

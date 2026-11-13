@@ -283,6 +283,80 @@ automatically. The original `moon_*` fields remain a compatibility view of the f
 enabled server. The status command must be a single executable name or path, without arguments
 or shell syntax.
 
+## Custom pages
+
+Custom pages let other tools on this Mac put views into Orbit without Orbit knowing
+their content. A tool writes a self-contained HTML file; Orbit shows it as its own
+page in the sidebar and can run the tool again with **Refresh**.
+
+Configure pages under Settings → Tools → **Custom pages**: add, rename, reorder,
+show or hide, and remove them. In `data/settings.json` they are the `custom_pages`
+list, in sidebar order:
+
+| Field | Meaning |
+| --- | --- |
+| `id` | Stable identifier, `a-z`, `0-9` and `-`, up to 40 characters. Orbit derives one from the file path when it is missing and keeps it when the page is renamed or moved. Direct links use it: `#page?id=<id>`. |
+| `name` | Sidebar and top-bar name, up to 80 characters. Shown as written, never translated. |
+| `file` | Absolute path (or `~/…`) to an `.html` file. |
+| `refresh_command` | Optional absolute path (or `~/…`) to a single executable, without arguments or shell syntax, the same rule as the server status command. Empty hides Refresh. |
+| `enabled` | `false` keeps the entry in Settings but removes it from the sidebar, the page endpoint and refresh. |
+
+At most 30 pages are supported. Enabled pages appear below the built-in destinations
+with a document icon. The page view keeps Orbit's top bar with the page name, the
+file's modification time as “Generated …” and the page's own **Refresh** button.
+While the file does not exist, the page shows “No page generated yet” instead of an error.
+When the file changes on disk, the next dashboard poll reloads the page.
+
+**How the file is served.** `GET /api/custom-pages/<id>` returns the configured file
+of an enabled page and nothing else: there is no path parameter and no directory
+listing. Unknown, disabled or missing pages answer 404; files larger than 16 MiB are
+refused. The response carries this Content-Security-Policy:
+
+```
+default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:;
+font-src data:; frame-ancestors 'self'; sandbox allow-scripts; base-uri 'none'; form-action 'none'
+```
+
+Orbit embeds it in an `<iframe sandbox="allow-scripts">`: no same-origin access, top
+navigation, forms or popups. The page runs in an opaque origin and cannot read Orbit's
+document, its action key, browser storage or the API. The page must therefore be
+self-contained: inline CSS and JavaScript, images and fonts as `data:` URLs, no
+external requests. Links that navigate away do not work inside the sandbox.
+
+**Refresh.** `POST /api/custom-pages/<id>/refresh` requires the `X-Orbit-Key` header
+like every other change. It runs the configured executable as an argument array of
+one element, without a shell, with standard input closed, from your home folder and
+with a `PATH` that includes Homebrew. Output is captured; the command may run for up
+to 180 seconds and stays in Orbit's process group, so closing the Mac app stops it.
+Only one refresh per page runs at a time (a second request answers 409). On success
+the view reloads the page and shows a short confirmation. On failure it keeps the
+last page and shows the exit code with the last lines of stderr (502), a timeout
+(504) or a command that is missing or not executable (400).
+
+**Appearance contract.** The frame address carries Orbit's current appearance as
+query parameters, and Orbit reloads the frame when the appearance changes:
+
+| Parameter | Values |
+| --- | --- |
+| `theme` | `light` or `dark`; Automatic is resolved from the system setting. |
+| `palette` | `orbit`, `ocean`, `sand`, `lavender` or `graphite`. |
+| `scale` | Font scale as a number, for example `1` or `1.2`. |
+
+A page reads them and applies them to its own `<html>`, for example:
+
+```html
+<script>
+  const query = new URLSearchParams(location.search);
+  document.documentElement.dataset.theme = query.get('theme') || 'light';
+  document.documentElement.dataset.palette = query.get('palette') || 'orbit';
+  document.documentElement.style.fontSize = (Number(query.get('scale')) || 1) * 100 + '%';
+</script>
+```
+
+To match Orbit, copy the design tokens from `static/css/tokens.css` and, for the
+palettes, `static/css/themes.css` into the page. Both key off `data-theme` and
+`data-palette` on `<html>`, so the parameters above select the same colors.
+
 ## Development and verification
 
 Python standard library and plain HTML, CSS and JavaScript modules, with no
@@ -320,6 +394,9 @@ ORBIT_PLAYWRIGHT_MODULE=/path/to/node_modules/playwright node tests/settings-bro
 
 `tests/browser.cjs` covers sorting, filters, the archive switch, the action key,
 dialogs, the Docker, server and storage views and a narrow viewport.
+`tests/custom-pages-browser.cjs` covers custom pages with a synthetic page and
+refresh scripts: sidebar, direct links, the sandbox, theme parameters, refresh
+success, failure and busy state, empty states and editing in Settings.
 `tests/settings-browser.cjs` covers saving, reopening, validation, detection, both
 languages, appearance modes, all themes and a narrow viewport. Screenshots go to
 the system's temporary folder as `orbit-*.png`.

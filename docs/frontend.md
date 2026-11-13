@@ -20,6 +20,7 @@ static/
   css/docker.css        Docker & DDEV view
   css/storage.css       storage view and the shared two-column layout
   css/settings.css      settings dialog
+  css/custom-pages.css  custom page entries, frame and empty state
   css/themes.css        optional palettes; they only redefine tokens
   js/main.js            entry point: binds events and starts refreshing
   js/store.js           shared state: last snapshot, view, filters, sorting
@@ -27,7 +28,7 @@ static/
   js/refresh.js         polling, activity label and progress bar
   js/render.js          view headings and drawing the current view
   js/notices.js         current notices, connection failures and the sidebar panel
-  js/views/*.js         one module per view
+  js/views/*.js         one module per view; custom-page.js shows custom pages
   js/paths.js           width-aware middle truncation of project paths
   js/project-actions.js note dialog, Git preview, terminal, editor, Finder
   js/settings.js        settings dialog and appearance

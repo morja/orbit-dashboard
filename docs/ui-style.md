@@ -24,10 +24,10 @@ primary label, secondary status and trailing details arrow. Long identifiers wra
 inside their own row without increasing the role's font size.
 
 Use color, spacing, border and shadow tokens. Navigation destinations use distinct
-icons: the gear belongs to Settings, the activity line to attention, the server stack to Servers, the cube to Docker & DDEV, and a play symbol
-in a circle to Local Services. Keep icon stroke width and dimensions consistent.
+icons: the gear belongs to Settings, the activity line to attention, the server stack to Servers, the cube to Docker & DDEV, a play symbol
+in a circle to Local Services, and a document with lines to each custom page. Keep icon stroke width and dimensions consistent.
 
-Review Overview, Projects, Servers, Docker & DDEV, Storage, Local Services and
+Review Overview, Projects, Servers, Docker & DDEV, Storage, Local Services, a custom page and
 Settings after shared CSS changes, in light/dark appearance and a narrow viewport.
 Check comparable headings and list text through computed styles, not screenshots
 alone. Dialogs and hover previews must remain within the viewport at increased zoom.
