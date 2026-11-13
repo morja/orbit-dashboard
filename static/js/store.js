@@ -14,6 +14,8 @@ export const store = {
   servicesSelection: {query: '', origin: 'all', scope: 'all', status: 'all', kind: 'all', favorites: false},
   expandedServices: new Set(),
   selectedServer: null,
+  // ID of the custom page shown by the #page route.
+  selectedPage: null,
   trafficSelection: {report: null, period: '30', date: '', mode: 'pages', query: '', sort: 'requests', merged: false, page: 1},
   integrationLists: {
     ddev: {query: '', status: 'all', sort: 'name', direction: 'asc'},

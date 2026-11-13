@@ -1,5 +1,6 @@
 /* Drawing the current view from the last state, and switching views by address. */
 import { goaccessView, loadGoAccess } from './views/goaccess.js';
+import { currentPage, customPageView, pageChanged, syncPageNav, syncPageTopbar } from './views/custom-page.js';
 import { t } from './i18n.js';
 import { renderNotices } from './notices.js';
 import { noteRender, updateActivity } from './refresh.js';
@@ -22,9 +23,12 @@ const views = {
   moon: serverView,
   docker: dockerView,
   storage: storageView,
+  page: customPageView,
 };
 
 function viewName(view) {
+  // Page names are workspace content and stay untranslated.
+  if (view === 'page') return currentPage()?.name || t('Page');
   return { goaccess: t('Web traffic'), services: t('Local services'), overview: t('Overview'), projects: t('Projects'), moon: t('Servers'), docker: 'Docker & DDEV', storage: t('Storage') }[view];
 }
 
@@ -48,14 +52,21 @@ export function render({ force = false } = {}) {
   const data = store.data;
   if (!data) return;
   syncListPreferences(data.config || {});
-  const route = store.view + ':' + (store.selectedServer || '');
+  const route = store.view + ':' + (store.selectedServer || '') + ':' + (store.selectedPage || '');
   const sameView = route === renderedRoute;
   const position = {top: window.scrollY, left: window.scrollX};
   const tablePositions = [...document.querySelectorAll('#content .table-wrap')].map(node => ({left: node.scrollLeft, top: node.scrollTop}));
   if (data.config) applyAppearance(data.config);
   renderNotices();
+  syncPageNav();
+  syncPageTopbar();
   // Preserve the interactive report and its scroll position during polling.
   if (sameView && store.view === 'goaccess' && !force && renderedLanguage === data.config?.language) return;
+  // A custom page keeps its frame unless the page, its file version or its notice changed.
+  if (sameView && store.view === 'page' && !force && renderedLanguage === data.config?.language && !pageChanged()) {
+    renderHeading(store.view);
+    return;
+  }
   const content = document.getElementById('content');
   const focus = document.activeElement;
   // Redrawing would close an open select in the content.
@@ -65,7 +76,7 @@ export function render({ force = false } = {}) {
 
   renderHeading(store.view);
   document.getElementById('nav-count').textContent = data.projects.length;
-  for (const link of document.querySelectorAll('[data-view]')) link.classList.toggle('active', link.dataset.view === store.view);
+  for (const link of document.querySelectorAll('[data-view]:not([data-page-id])')) link.classList.toggle('active', link.dataset.view === store.view);
   updateActivity();
   document.getElementById('footer-status').textContent = data.mac?.hostname || '';
 
@@ -106,6 +117,7 @@ export function navigate() {
   const [route, query = ''] = location.hash.slice(1).split('?');
   const requested = route === 'servers' ? 'moon' : route;
   store.selectedServer = new URLSearchParams(query).get('server');
+  store.selectedPage = route === 'page' ? new URLSearchParams(query).get('id') : null;
   store.view = Object.hasOwn(views, requested) ? requested : 'overview';
   render();
   if (store.view === 'goaccess') loadGoAccess();

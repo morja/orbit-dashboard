@@ -1,4 +1,5 @@
 import { bindGoAccess } from './views/goaccess.js';
+import { bindCustomPages } from './views/custom-page.js';
 import { bindGitMiniPreviews } from './git-mini-preview.js';
 import { bindCommitHistory } from './commit-history.js';
 /*
@@ -32,6 +33,7 @@ updateClock();
 setInterval(updateClock, 60000);
 
 bindGoAccess(render);
+bindCustomPages(render);
 bindPathLayout();
 bindProjectEvents();
 bindDockerEvents(render);

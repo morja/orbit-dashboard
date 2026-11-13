@@ -171,6 +171,44 @@ function addServer() {
   document.querySelector('.settings-server:last-child [data-server="label"]').focus();
 }
 
+/* Custom pages */
+
+function customPageRow(page = {}) {
+  const row = document.createElement('div');
+  row.className = 'settings-custom-page settings-source';
+  // The ID stays with the page across renames and moves; new pages get one on save.
+  row.dataset.pageId = page.id || '';
+  row.innerHTML = markup`
+    <div class="settings-heading">
+      <label class="settings-toggle"><input type="checkbox" data-page="enabled" ${page.enabled !== false ? 'checked' : ''}>${tHtml('Show in sidebar')}</label>
+      <div class="custom-page-row-actions">
+        <button type="button" class="icon-button move-custom-page" data-move="-1" aria-label="${escape(t('Move page up'))}">${icon('up')}</button>
+        <button type="button" class="icon-button move-custom-page" data-move="1" aria-label="${escape(t('Move page down'))}">${icon('down')}</button>
+        <button type="button" class="icon-button remove-custom-page" aria-label="${escape(t('Remove page'))}">${icon('close')}</button>
+      </div>
+    </div>
+    <label>${tHtml('Page name')}<input data-page="name" maxlength="80" required value="${escape(page.name || '')}"></label>
+    <label>${tHtml('HTML file')}<input data-page="file" maxlength="4096" required placeholder="/path/to/page.html" value="${escape(page.file || '')}"></label>
+    <label>${tHtml('Refresh command')}<input data-page="refresh_command" maxlength="4096" placeholder="/path/to/generate-page" value="${escape(page.refresh_command || '')}"></label>
+    <p class="muted">${tHtml('Optional. An absolute path to one executable, without arguments. Refresh runs it for up to 180 seconds and then reloads the page.')}</p>
+  `;
+  document.getElementById('settings-custom-pages').append(row);
+}
+
+function addCustomPage() {
+  customPageRow();
+  document.querySelector('.settings-custom-page:last-child [data-page="name"]').focus();
+}
+
+// Order in Settings is the order in the sidebar.
+function moveCustomPage(button) {
+  const row = button.closest('.settings-custom-page');
+  const target = Number(button.dataset.move) < 0 ? row.previousElementSibling : row.nextElementSibling?.nextElementSibling;
+  if (Number(button.dataset.move) < 0 && !target) return;
+  row.parentElement.insertBefore(row, target || null);
+  button.focus();
+}
+
 /* Intervals */
 
 function intervalFields(config) {
@@ -250,6 +288,8 @@ export async function openSettings(section = 'appearance') {
     draft.sources.forEach((source) => sourceRow(source));
     document.getElementById('settings-servers').replaceChildren();
     draft.servers.forEach((server) => serverRow(server));
+    document.getElementById('settings-custom-pages').replaceChildren();
+    (draft.custom_pages || []).forEach((page) => customPageRow(page));
     for (const key of ['scan_depth', 'terminal', 'editor', 'theme', 'palette', 'language', 'density']) field(key).value = draft[key];
     for (const key of ['font_size', 'contrast', 'zoom']) {
       const select = field(key);
@@ -295,6 +335,7 @@ function collectSettings() {
     }));
     return server;
   });
+  config.custom_pages = [...document.querySelectorAll('.settings-custom-page')].map((row) => ({ id: row.dataset.pageId, ...rowValues(row, 'page') }));
   for (const key of ['terminal', 'editor', 'theme', 'palette', 'language', 'density']) config[key] = field(key).value;
   for (const key of ['services_enabled', 'ddev_enabled', 'docker_enabled', 'remember_list_preferences', 'show_next_step', 'show_storage', 'show_last_changed', 'show_ddev']) config[key] = field(key).checked;
   config.goaccess = { enabled: field('goaccess_enabled').checked, host: field('goaccess_host').value, command: field('goaccess_command').value };
@@ -366,6 +407,9 @@ export function bindSettings() {
   dialog.addEventListener('click', (event) => {
     if (event.target.closest('.close-settings')) dialog.close();
     event.target.closest('.remove-server')?.closest('.settings-server').remove();
+    event.target.closest('.remove-custom-page')?.closest('.settings-custom-page').remove();
+    const move = event.target.closest('.move-custom-page');
+    if (move) moveCustomPage(move);
     const source = event.target.closest('.settings-source');
     if (source && event.target.closest('.remove-source')) {
       source.querySelector('.remove-source').hidden = true;
@@ -395,6 +439,7 @@ export function bindSettings() {
   document.getElementById('settings-source-search').addEventListener('input', filterSources);
   document.getElementById('add-source').addEventListener('click', addSource);
   document.getElementById('add-server').addEventListener('click', addServer);
+  document.getElementById('add-custom-page').addEventListener('click', addCustomPage);
   document.getElementById('detect-setup').addEventListener('click', detectSetup);
   document.getElementById('settings-detection').addEventListener('click', applyDetection);
 

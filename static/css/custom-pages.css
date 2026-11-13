@@ -1,0 +1,71 @@
+/* Custom pages: sidebar entries, the generated time in the top bar and the sandboxed frame. */
+
+/* Entries join the navigation's own flex layout, also in the narrow icon bar. */
+.custom-pages-nav {
+  display: contents;
+}
+
+.sidebar nav a .nav-page-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* A custom page has its own status and Refresh; project status and global Refresh step aside. */
+body[data-view="page"] #live-label,
+body[data-view="page"] #refresh {
+  display: none;
+}
+
+/* Unlike the clock, the generated time stays visible on smaller windows. */
+.topbar-right > span.page-generated:not([hidden]) {
+  display: inline;
+  white-space: nowrap;
+}
+
+/* The frame fills the main area below the top bar; the page draws its own surface. */
+.custom-page-frame {
+  display: block;
+  width: 100%;
+  height: max(420px, calc(100vh / var(--ui-zoom, 1) - 150px));
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+
+.custom-page-empty {
+  text-align: center;
+  padding: 48px 20px;
+}
+
+.custom-page-empty h2 {
+  font-size: var(--font-card-title);
+  font-weight: 550;
+  margin: 0 0 6px;
+}
+
+.custom-page-empty p {
+  font-size: var(--font-body);
+  margin: 0 0 16px;
+}
+
+.custom-page-empty .button {
+  display: inline-flex;
+}
+
+.custom-page-error {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Settings rows: reorder and remove controls stay together on the right. */
+.custom-page-row-actions {
+  display: flex;
+  gap: 2px;
+}
+
+@media (max-width: 650px) {
+  .custom-page-frame {
+    height: max(360px, calc(100vh / var(--ui-zoom, 1) - 170px));
+  }
+}

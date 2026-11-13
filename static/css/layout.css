@@ -225,7 +225,8 @@ main {
   }
 }
 
-#refresh.busy svg {
+#refresh.busy svg,
+#page-refresh.busy svg {
   animation: spin 1.2s linear infinite;
 }
 

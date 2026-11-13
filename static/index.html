@@ -24,6 +24,7 @@
       <a href="#services" data-view="services" aria-label="Local services"><span data-icon="services"></span>Local services</a>
       <a href="#goaccess" data-view="goaccess" aria-label="Web traffic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M6 16V9m6 7V4m6 12v-5"/></svg>Web traffic</a>
       <a href="#storage" data-view="storage" aria-label="Storage"><span data-icon="disk"></span>Storage</a>
+      <div id="custom-pages-nav" class="custom-pages-nav"></div>
     </nav>
     <div class="sidebar-note"><div class="mini-orbit"></div><p>Everything in one place.</p><span>Your Mac. Your projects.<br>Your next step.</span></div>
     <div class="sidebar-notices">
@@ -44,6 +45,8 @@
       <div class="topbar-right">
         <span id="clock"></span>
         <button id="settings-topbar" class="icon-button" title="Settings" aria-label="Settings"><span data-icon="settings"></span></button>
+        <span id="page-generated" class="page-generated" hidden></span>
+        <button id="page-refresh" class="button secondary" hidden><span data-icon="refresh"></span><span>Refresh</span></button>
         <button id="refresh" class="button secondary"><span data-icon="refresh"></span><span>Refresh</span></button>
       </div>
       <div class="refresh-progress" id="refresh-progress" hidden><i></i></div>
@@ -199,6 +202,14 @@
               <label for="setting-goaccess_command">Export command<input id="setting-goaccess_command" maxlength="4096" placeholder="/path/to/export"></label>
             </div>
             <p class="muted">Configure an SSH alias and a read-only export executable. No server changes are made by Orbit.</p>
+          </section>
+          <section class="settings-section">
+            <div class="settings-heading">
+              <h3>Custom pages</h3>
+              <button type="button" class="button secondary" id="add-custom-page">Add page</button>
+            </div>
+            <p>Show HTML files that other tools generate on this Mac as their own pages in the sidebar. Orbit displays them in a sandbox without network access.</p>
+            <div id="settings-custom-pages"></div>
           </section>
         </div>
 
