@@ -8,6 +8,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer as StandardT
 from pathlib import Path
 from socketserver import TCPServer
 from urllib.parse import urlparse, parse_qs
+import custom_pages
 import local_services
 from goaccess_integration import GoAccessCache, readable_report
 import argparse
@@ -927,7 +928,7 @@ class Dashboard:
                     url = match.get("primary_url") or match.get("httpurl")
                     if isinstance(url, str) and urlparse(url).scheme in ("http", "https"):
                         project["ddev"]["url"] = url
-            return {"services": copy.deepcopy(self.services) if self.config["services_enabled"] else {"items": [], "notices": [], "checked_at": None}, "servers": [{**item, "status": copy.deepcopy(self.servers.get(self.server_key(item)))} for item in self.config['servers'] if item['enabled']], "app": "Orbit", "mac": copy.deepcopy(self.mac), "moon": copy.deepcopy(self.moon) if self.config["moon_enabled"] else None, "projects": projects, "docker": copy.deepcopy(self.docker) if self.config["docker_enabled"] else {"status": "disabled", "errors": [], "usage": []}, "ddev": {"checked_at": ddev["checked_at"], "error": ddev["error"], "running": None if ddev["error"] or not ddev["checked_at"] else sum(str(p.get("status", "")).lower() == "running" for p in ddev["projects"]), "projects": [{"name": p.get("name", ""), "path": p.get("approot", p.get("root", "")), "status": "unknown" if ddev["error"] else str(p.get("status", "unknown")).lower()} for p in ddev["projects"]]}, "checking": sorted(self.active), "errors": dict(self.errors), "project_errors": getattr(self, "project_errors", []), "projects_checked_at": getattr(self, "projects_checked", None), "started_at": self.started_at, "progress": copy.deepcopy(self.progress), "roots": [source["path"] for source in self.config["sources"]], "config": copy.deepcopy(self.config), "server_time": stamp()}
+            return {"services": copy.deepcopy(self.services) if self.config["services_enabled"] else {"items": [], "notices": [], "checked_at": None}, "servers": [{**item, "status": copy.deepcopy(self.servers.get(self.server_key(item)))} for item in self.config['servers'] if item['enabled']], "app": "Orbit", "mac": copy.deepcopy(self.mac), "moon": copy.deepcopy(self.moon) if self.config["moon_enabled"] else None, "projects": projects, "docker": copy.deepcopy(self.docker) if self.config["docker_enabled"] else {"status": "disabled", "errors": [], "usage": []}, "ddev": {"checked_at": ddev["checked_at"], "error": ddev["error"], "running": None if ddev["error"] or not ddev["checked_at"] else sum(str(p.get("status", "")).lower() == "running" for p in ddev["projects"]), "projects": [{"name": p.get("name", ""), "path": p.get("approot", p.get("root", "")), "status": "unknown" if ddev["error"] else str(p.get("status", "unknown")).lower()} for p in ddev["projects"]]}, "checking": sorted(self.active), "errors": dict(self.errors), "project_errors": getattr(self, "project_errors", []), "projects_checked_at": getattr(self, "projects_checked", None), "started_at": self.started_at, "progress": copy.deepcopy(self.progress), "roots": [source["path"] for source in self.config["sources"]], "custom_pages": custom_pages.status(self.config), "config": copy.deepcopy(self.config), "server_time": stamp()}
 
 
 STATIC = APP / "static"
@@ -997,6 +998,17 @@ class Handler(BaseHTTPRequestHandler):
             body = readable_report(body, query.get('theme', ['light'])[0])
             return self.send(body, mime='text/html; charset=utf-8', headers={
                 'Content-Security-Policy': "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; style-src 'unsafe-inline'; img-src data:; font-src data:; frame-ancestors 'self'; sandbox allow-scripts; base-uri 'none'; form-action 'none'"})
+        page = re.fullmatch(r"/api/custom-pages/([a-z0-9-]{1,40})", path)
+        if page:
+            # Only the configured file of a configured page; the query only informs the page itself.
+            item = custom_pages.find(self.server.dashboard.config, page[1])
+            try:
+                body = custom_pages.read(item) if item else None
+            except ValueError as error:
+                return self.send({"error": str(error)}, 413)
+            if body is None:
+                return self.send({"error": "Page not found"}, 404)
+            return self.send(body, mime="text/html; charset=utf-8", headers={"Content-Security-Policy": custom_pages.PAGE_POLICY})
         if path == "/api/state":
             # The dashboard asks with its last ETag and redraws only when the state changed.
             snapshot = self.server.dashboard.snapshot()
@@ -1078,6 +1090,19 @@ class Handler(BaseHTTPRequestHandler):
                     dashboard.manual_refresh = time.time()
                 dashboard.refresh(True)
                 return self.send({"ok": True})
+            refresh_page = re.fullmatch(r"/api/custom-pages/([a-z0-9-]{1,40})/refresh", path)
+            if refresh_page:
+                item = custom_pages.find(dashboard.config, refresh_page[1])
+                if item is None:
+                    return self.send({"error": "Page not found"}, 404)
+                try:
+                    return self.send(custom_pages.refresh(item))
+                except custom_pages.RefreshBusy as error:
+                    return self.send({"error": str(error)}, 409)
+                except custom_pages.RefreshFailed as error:
+                    return self.send({"error": str(error)}, 502)
+                except TimeoutError as error:
+                    return self.send({"error": str(error)}, 504)
             if path == "/api/disk-check":
                 try:
                     return self.send(run_disk_check())

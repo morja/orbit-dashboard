@@ -1,6 +1,7 @@
 """Validated local settings, explicit discovery and migration of the personal setup."""
 from pathlib import Path
 import copy
+import hashlib
 import json
 import os
 import re
@@ -14,10 +15,11 @@ INTERVALS = {'mac': 30, 'projects': 300, 'moon': 120, 'ddev': 60, 'docker': 120,
 TERMINALS = ['auto', 'cmux', 'Terminal', 'iTerm', 'none']
 EDITORS = ['none', 'Visual Studio Code', 'Cursor', 'PyCharm', 'IntelliJ IDEA']
 PALETTES = ['orbit', 'ocean', 'sand', 'lavender', 'graphite']
+MAX_CUSTOM_PAGES = 30  # Keep the validation message in step.
 
 
 def defaults():
-    return {'version': 1, 'goaccess': {'enabled': False, 'host': '', 'command': ''}, 'sources': [], 'servers': [], 'category_order': [], 'scan_depth': 6, 'excluded_dirs': EXCLUDED.copy(),
+    return {'version': 1, 'goaccess': {'enabled': False, 'host': '', 'command': ''}, 'sources': [], 'servers': [], 'custom_pages': [], 'category_order': [], 'scan_depth': 6, 'excluded_dirs': EXCLUDED.copy(),
             'moon_enabled': False, 'moon_host': '', 'moon_command': 'moon-status', 'moon_label': 'Server',
             'services_enabled': False, 'service_preferences': {}, 'ddev_enabled': False, 'docker_enabled': False, 'terminal': 'auto', 'editor': 'none',
             'intervals': INTERVALS.copy(), 'projects_foreground_interval': 60, 'projects_background_enabled': True,
@@ -170,6 +172,7 @@ def validate(data):
                                    'host': alias, 'command': executable, 'enabled': enabled, 'show_in_overview': show_in_overview,
                                    'automatic': automatic, 'probe_services': probe_services, 'probe_ports': probe_ports, 'website_links': clean_links})
     result['servers'] = normalized_servers
+    result['custom_pages'] = custom_pages(result['custom_pages'])
     # Keep the original fields as a compatibility view of the first enabled connection.
     first = next((item for item in normalized_servers if item['enabled']), None)
     result['moon_enabled'] = bool(first)
@@ -207,6 +210,42 @@ def validate(data):
         if type(seconds) is not int or not minimum <= seconds <= 86400:
             raise ValueError(f'{key}: Interval must be between {minimum} and 86400 seconds')
     return result
+
+
+def custom_pages(pages):
+    """Locally generated HTML pages shown in the sidebar, each with an optional refresh executable."""
+    if not isinstance(pages, list) or len(pages) > MAX_CUSTOM_PAGES:
+        raise ValueError('A maximum of 30 custom pages is supported')
+    normalized = []
+    ids = set()
+    for item in pages:
+        if not isinstance(item, dict) or set(item) - {'id', 'name', 'file', 'refresh_command', 'enabled'}:
+            raise ValueError('Invalid custom page')
+        name = text(item.get('name', ''), 'Page name', 80)
+        if not name:
+            raise ValueError('Provide a name for each custom page')
+        file = text(item.get('file', ''), 'Page file', 4096)
+        file = str(Path(file).expanduser()) if file else ''
+        if not file.startswith('/') or not file.lower().endswith('.html'):
+            raise ValueError('Page files must be absolute paths to .html files')
+        refresh = text(item.get('refresh_command', ''), 'Refresh command', 4096)
+        refresh = str(Path(refresh).expanduser()) if refresh else ''
+        # Same rule as the server status command: one executable, no arguments or shell syntax.
+        if refresh and (not refresh.startswith('/') or not re.fullmatch(r'[a-zA-Z0-9_./-]+', refresh)):
+            raise ValueError('Refresh command must be an absolute path to a single executable')
+        enabled = item.get('enabled', True)
+        if type(enabled) is not bool:
+            raise ValueError('Custom page enabled must be a boolean')
+        # New pages arrive without an ID. Deriving it from the file keeps it stable
+        # across restarts, also for entries written by hand; saving stores it.
+        page_id = text(item.get('id', ''), 'Page ID', 40) or hashlib.sha1(file.encode()).hexdigest()[:12]
+        if not re.fullmatch(r'[a-z0-9-]{1,40}', page_id):
+            raise ValueError('Invalid custom page ID')
+        if page_id in ids:
+            raise ValueError('Duplicate custom page')
+        ids.add(page_id)
+        normalized.append({'id': page_id, 'name': name, 'file': file, 'refresh_command': refresh, 'enabled': enabled})
+    return normalized
 
 
 def migrate_legacy(data):
